@@ -63,7 +63,7 @@ def R_func(a,theta):
     return a*(1-e(a)**2)/(1.+e(a)*np.cos(theta-varpi(a)))
 
 def hor_func(a,theta):
-    return (hormin+(hormax-hormin)*(1-parh*0.5*e(a)*np.cos(theta)))
+    return (hormin+(hormax-hormin)*(1-parh*0.5*e(a)*np.cos(theta-varpi(a[:]))))
 
 def z_scale(a,theta):
     #return hor*(a[:]/ain)**(1+flaring)
@@ -77,7 +77,7 @@ def vphi_func(a,theta):
 
 def vz_func(a,theta):
     #return  np.zeros(len(a))
-    return np.sqrt(G*M/a)*e(a)*hor*np.sin(theta)*parvz
+    return np.sqrt(G*M/a)*e(a)*hor*np.sin(theta-varpi(a[:]))*parvz
 
 #NB: this function takes as input np.arrays, if you want to pass single values 
 #use e.g. xy2aphi(np.array([1]),np.array([np.pi]).
