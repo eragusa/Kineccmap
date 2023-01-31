@@ -8,15 +8,19 @@ import matplotlib.tri as tri
 #size of ellipses
 ain=1.
 aout=10
-#vertical properties
-hor=0.1
-flaring=0.5
 #eccentricity parameters
 e0=0.3
 qecc=0.5
+#vertical properties
+hor=0.1
+hormin=0.1*hor #sets the values between which hor oscillate
+hormax=hor
+parh=1./e0 #rules strength of artificially prescribed h perturbations due to ecc
+parvz=1./e0#same as above but for vz
+flaring=0.25
 #phase parameters 
-varpi0=0
-orbitfrac=0.
+varpi0=0*np.pi/2.
+orbitfrac=0
 ###########
 G=1.
 M=1.
@@ -30,8 +34,8 @@ ymin=xmin
 ymax=xmax
 zmin=xmin
 zmax=xmax
-i0=np.pi/8
-PA0=np.pi/3
+i0=0*np.pi/6
+PA0=0*np.pi/3
 
 
 def rot_z(x,theta):
@@ -58,8 +62,12 @@ def varpi(a):
 def R_func(a,theta):
     return a*(1-e(a)**2)/(1.+e(a)*np.cos(theta-varpi(a)))
 
+def hor_func(a,theta):
+    return (hormin+(hormax-hormin)*(1-parh*0.5*e(a)*np.cos(theta)))
+
 def z_scale(a,theta):
-    return hor*(a[:]/ain)**(1+flaring)
+    #return hor*(a[:]/ain)**(1+flaring)
+    return hor_func(a,theta)*(a[:]/ain)**(1+flaring)
 
 def vR_func(a,theta):
     return -np.sqrt(G*M/a[:])*e(a[:])*np.sin(theta[:]-varpi(a[:]))/np.sqrt(1-e(a[:])**2)
@@ -68,7 +76,8 @@ def vphi_func(a,theta):
     return np.sqrt(G*M/a[:])*(1.+e(a[:])*np.cos(theta[:]-varpi(a[:])))/np.sqrt(1-e(a[:])**2)
 
 def vz_func(a,theta):
-    return  np.zeros(len(a))
+    #return  np.zeros(len(a))
+    return np.sqrt(G*M/a)*e(a)*hor*np.sin(theta)*parvz
 
 #NB: this function takes as input np.arrays, if you want to pass single values 
 #use e.g. xy2aphi(np.array([1]),np.array([np.pi]).
@@ -139,24 +148,29 @@ v1vbottom=rot_x(vvbottom,i0)
 
 
 #Watch the system as if it was originally created face-on (line of sight is z-axis)
+velmax=v1v[2,:].max()*0.9
+velmin=-velmax
 plt.figure(1)
-plt.scatter(x1v[0,:],x1v[1,:],c=v1v[2,:],cmap="RdBu_r")
+plt.scatter(x1v[0,:],x1v[1,:],c=v1v[2,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
-plt.tricontour(x1v[0,:],x1v[1,:],v1v[2,:],levels=14, linewidths=0.5, colors='k')
+plt.tricontour(x1v[0,:],x1v[1,:],v1v[2,:],levels=20, linewidths=0.5, colors='k')
 plt.axis('equal')
 
 #Watch the system in 3D
 fig = plt.figure(2)
 ax = fig.add_subplot(projection='3d')
-ax.scatter(x1v[0,:],x1v[1,:],x1v[2,:],c=v1v[2,:],cmap="RdBu_r")
-ax.scatter(x1vbottom[0,:],x1vbottom[1,:],x1vbottom[2,:],c=v1vbottom[2,:],cmap="RdBu_r")
+ax.scatter(x1v[0,:],x1v[1,:],x1v[2,:],c=v1v[2,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
+ax.scatter(x1vbottom[0,:],x1vbottom[1,:],x1vbottom[2,:],c=v1vbottom[2,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
 ax.set_xlim([xmin,xmax])
 ax.set_ylim([ymin,ymax])
 ax.set_zlim([zmin,zmax])
 
 #Watch the system as it it was created edge-on (line of sight is y-axis)
 plt.figure(3)
-plt.scatter(x1v[0,:],x1v[2,:],c=v1v[1,:],cmap="RdBu_r")
-plt.scatter(x1vbottom[0,:],x1vbottom[2,:],c=v1vbottom[1,:],cmap="RdBu_r")
+velmax=v1v[1,:].max()*0.9
+velmin=-velmax
+
+plt.scatter(x1v[0,:],x1v[2,:],c=v1v[1,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.scatter(x1vbottom[0,:],x1vbottom[2,:],c=v1vbottom[1,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 plt.axis('equal')
