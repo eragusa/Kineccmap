@@ -9,7 +9,7 @@ import matplotlib.tri as tri
 ain=1.
 aout=10
 #eccentricity parameters
-e0=0.3
+e0=0.1
 qecc=0.5
 #vertical properties
 hor=0.1
@@ -17,9 +17,9 @@ hormin=0.1*hor #sets the values between which hor oscillate
 hormax=hor
 parh=1./e0 #rules strength of artificially prescribed h perturbations due to ecc
 parvz=1./e0#same as above but for vz
-flaring=0.25
+flaring=0*0.25
 #phase parameters 
-varpi0=0*np.pi/2.
+varpi0=0.*np.pi/2.
 orbitfrac=0
 ###########
 G=1.
@@ -34,9 +34,9 @@ ymin=xmin
 ymax=xmax
 zmin=xmin
 zmax=xmax
-i0=0*np.pi/6
+i0=np.pi/3
 PA0=0*np.pi/3
-
+nchannels=20
 
 def rot_z(x,theta):
     rotmatr_z=np.array([[np.cos(theta),-np.sin(theta),0],[np.sin(theta),np.cos(theta),0],[0,0,1]])
@@ -63,21 +63,24 @@ def R_func(a,theta):
     return a*(1-e(a)**2)/(1.+e(a)*np.cos(theta-varpi(a)))
 
 def hor_func(a,theta):
-    return (hormin+(hormax-hormin)*(1-parh*0.5*e(a)*np.cos(theta-varpi(a[:]))))
+    return hor*(a[:]/ain)**(1+flaring)
+    #(hormin+(hormax-hormin)*(1-parh*0.5*e(a)*np.cos(theta-varpi(a[:]))))
 
 def z_scale(a,theta):
     #return hor*(a[:]/ain)**(1+flaring)
-    return hor_func(a,theta)*(a[:]/ain)**(1+flaring)
+    #return hor_func(a,theta)*(a[:]/ain)**(1+flaring)
+    return hor_func(a,theta)*(1.-3.*e(a)*np.cos(theta))
 
 def vR_func(a,theta):
-    return -np.sqrt(G*M/a[:])*e(a[:])*np.sin(theta[:]-varpi(a[:]))/np.sqrt(1-e(a[:])**2)
+    return np.sqrt(G*M/a[:])*e(a[:])*np.sin(theta[:]-varpi(a[:]))/np.sqrt(1-e(a[:])**2)
 
 def vphi_func(a,theta):
     return np.sqrt(G*M/a[:])*(1.+e(a[:])*np.cos(theta[:]-varpi(a[:])))/np.sqrt(1-e(a[:])**2)
 
 def vz_func(a,theta):
     #return  np.zeros(len(a))
-    return np.sqrt(G*M/a)*e(a)*hor*np.sin(theta-varpi(a[:]))*parvz
+    #return np.sqrt(G*M/a)*e(a)*hor*np.sin(theta-varpi(a[:]))*parvz
+    return 3.*e(a)*np.sqrt(G*M/a**3)*np.sin(theta-varpi(a[:]))*z_scale(a,theta)
 
 #NB: this function takes as input np.arrays, if you want to pass single values 
 #use e.g. xy2aphi(np.array([1]),np.array([np.pi]).
@@ -174,3 +177,23 @@ plt.scatter(x1v[0,:],x1v[2,:],c=v1v[1,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.scatter(x1vbottom[0,:],x1vbottom[2,:],c=v1vbottom[1,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 plt.axis('equal')
+
+xchan=[]
+ychan=[]
+vzchan=[]
+vzmin=np.min(v1v[2,:])
+vzmax=np.max(v1v[2,:])
+chanwidth=(vzmax-vzmin)/nchannels
+vbin=vzmin+np.array(range(nchannels))*chanwidth
+#create channel maps
+for i in range(0,nchannels-1):
+    which=np.nonzero((v1v[2,:]>vbin[i])*(v1v[2,:]<vbin[i+1]))
+    xchan.append(x1v[0,which])
+    ychan.append(x1v[1,which])
+    vzchan.append(v1v[2,which])
+
+for i in range(0,nchannels-1,3):
+    plt.figure(10*i)
+    plt.scatter(xchan[i],ychan[i])
+    plt.xlim([xmin,xmax])
+    plt.ylim([ymin,ymax])
