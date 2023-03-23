@@ -28,7 +28,7 @@ def vxvy2vrvphi(x,y,vx,vy):
 
 
 
-def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10):#,simfield):
+def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout=0.,ain=0.):#,simfield):
     sigma=sigmainp
     ecc=eccinp
     phase=phaseinp
@@ -38,11 +38,13 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10):#,s
     
     
 #    wheremax=np.nonzero(sigma==np.max(sigma)) 
-    fracmax=0.6
+    fracmax=0.6 # at which fraction of max to take cavity size
     wheremax=de.isclosetoArr(sigma,sigma.max()*fracmax,np.diff(sigma).max())[0]
     radIn=radprof[wheremax[0]]
-    ain=radIn
-    aout=radprof[-1]*0.7
+    if ain==0: #if ain not passed take the inner edge of the cavity
+        ain=radIn
+    if aout==0: #define aout if not passed as argument as fraction of the outer grid radius
+        aout=radprof[-1]*0.7
     emax=ecc[wheremax[0]]
     eout=np.mean(ecc[-20:])
     #eccentricity parameters
