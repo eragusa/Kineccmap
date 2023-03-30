@@ -6,8 +6,14 @@ import matplotlib.tri as tri
 import discEccanalysis_pysplash as de
 import sys
 from joblib import Parallel, delayed
+from vertical_structure import Omega,cs,Hcirc
 import multiprocessing
 import os
+import pdb
+
+#Note that interpolated functions _a are defined to not return 0 for any "a" larger than (1-frgrid) of the radprof.
+#This is done to avoid weird behaviour of interpolated polynomials close to the boundary and beyond
+frgrid=0.05
 
 #eccentricity parameters
 e0=0.1
@@ -25,6 +31,16 @@ orbitfrac=0
 ###########
 G=1.
 M=1.
+
+#orienting your disc in space
+i0=0*np.pi/3
+PA0=0*np.pi/3
+#for channel maps
+nchannels=20
+
+#Npol for interpolation
+npol=20
+
 
 def vcircular(R,theta):
     return np.sqrt(G*M/R)*np.sin(theta),np.sqrt(G*M/R)*np.cos(theta),np.sqrt(G*M/R)
@@ -45,9 +61,19 @@ def vxvy2vrvphi(x,y,vx,vy):
     R=np.sqrt(x**2+y**2)
     vr=vx*x/R+vy*y/R 
     vphi=vy*x/R-vx*y/R
-
     return vr,vphi
 
+def vrvphi2vxvy(x,y,vr,vphi):
+    R=np.sqrt(x**2+y**2)
+    sintheta=y/R
+    costheta=x/R
+    vx=vr*costheta-vphi*sintheta
+    vy=vr*sintheta+vphi*costheta
+    return vx,vy
+
+def pressure_corrected_vphi(a,vphi,dPda1rhoa):
+    return np.sqrt(vphi**2+dPda1rhoa(a))
+    
 def killLoky():
     #returns the default signal of kill, which is 15
     out=os.system('ps -ef|grep LokyProcess|awk -v n="`ps -ef|grep LokyProcess|wc -l`" \'NR<n-3{print $2}\'|xargs kill')
@@ -59,8 +85,6 @@ def killLoky():
     print("Killing stray LokyProcesses from parallelisation: ",success)
     return
 
-
-
 def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout=0.,ain=0.):#,simfield):
     sigma=sigmainp
     ecc=eccinp
@@ -70,7 +94,6 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     ymesh=y
     
     
-#    wheremax=np.nonzero(sigma==np.max(sigma)) 
     fracmax=0.6 # at which fraction of max to take cavity size
     wheremax=de.isclosetoArr(sigma,sigma.max()*fracmax,np.diff(sigma).max())[0]
     radIn=radprof[wheremax[0]]
@@ -80,22 +103,14 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
         aout=radprof[-1]*0.7
     emax=ecc[wheremax[0]]
     eout=np.mean(ecc[-20:])
-#    import pdb
-  #  pdb.set_trace() 
+
     #grid properties
-    Nx=500
-    Ny=Nx
     xmin=-aout*(1.+e0)
     xmax=aout*(1.+e0)
     ymin=xmin
     ymax=xmax
     zmin=xmin
     zmax=xmax
-    i0=0*np.pi/3
-    PA0=0*np.pi/3
-    nchannels=20
-    
-    npol=20
     
     def rot_z(x,theta):
         rotmatr_z=np.array([[np.cos(theta),-np.sin(theta),0],[np.sin(theta),np.cos(theta),0],[0,0,1]])
@@ -111,25 +126,39 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     
     ee=np.polynomial.Chebyshev.fit(radprof,ecc,npol)
     def e(a):
-        return ee(a)*(a<radprof[-1])
+        return ee(a)*(a<radprof[-int(frgrid*len(radprof))])
     
     varpivarpi=np.polynomial.Chebyshev.fit(radprof,phase,npol*2)
     def varpi(a):
-        return varpivarpi(a)*(a<radprof[-1])
+        return varpivarpi(a)*(a<radprof[-int(frgrid*len(radprof))])
     
     cos_interp=np.polynomial.Chebyshev.fit(radprof,np.cos(phase),npol*2)
     def cosvarpi(a):
-        return cos_interp(a)*(a<radprof[-1])
+        return cos_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
     
     sin_interp=np.polynomial.Chebyshev.fit(radprof,np.sin(phase),npol*2)
     def sinvarpi(a):
-        return sin_interp(a)*(a<radprof[-1])
+        return sin_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    sigma_interp=np.polynomial.Chebyshev.fit(radprof,sigma,3*npol)
+    sigma_interp=np.polynomial.Chebyshev.fit(radprof,sigma,6*npol)
     def sigma_a(a):
-        return sigma_interp(a)*(a<radprof[-1])
+        return sigma_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
+
+    rho=sigma#/Hcirc(radprof)
+    cs2rho=cs(radprof)**2*rho
+    dPda1rhoa=np.nan_to_num(\
+                     np.divide(\
+                                np.gradient(cs(radprof)**2*rho,radprof),\
+                                rho,\
+                                out=np.zeros_like(rho),where=rho>0.)\
+                                *radprof,\
+                            posinf=0,neginf=0)
+    dPda1rhoa_interp=np.polynomial.Chebyshev.fit(radprof,dPda1rhoa,4*npol)
+    def dPda1rhoa_a(a):
+        return dPda1rhoa_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
                  
+#    pdb.set_trace()
     def R_func(a,theta):
         return a*(1-e(a)**2)/(1.+e(a)*(np.cos(theta)*cosvarpi(a)+np.sin(theta)*sinvarpi(a)))
     
@@ -235,6 +264,6 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     v1v=rot_x(vv,i0)
     v1vbottom=rot_x(vvbottom,i0)
 
-    return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a
+    return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a,dPda1rhoa_a
 
 
