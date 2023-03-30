@@ -6,6 +6,28 @@ import matplotlib.tri as tri
 import discEccanalysis_pysplash as de
 import sys
 from joblib import Parallel, delayed
+import multiprocessing
+import os
+
+#eccentricity parameters
+e0=0.1
+qecc=0.5
+#vertical properties
+hor=0.0
+hormin=0.1*hor #sets the values between which hor oscillate
+hormax=hor
+parh=1./e0 #rules strength of artificially prescribed h perturbations due to ecc
+parvz=1./e0 #same as above but for vz
+flaring=0*0.25
+#phase parameters 
+varpi0=0.*np.pi/2.
+orbitfrac=0
+###########
+G=1.
+M=1.
+
+def vcircular(R,theta):
+    return np.sqrt(G*M/R)*np.sin(theta),np.sqrt(G*M/R)*np.cos(theta),np.sqrt(G*M/R)
 
 def makeadvancementbar(i,Np=1.E6):
     if(i==0):
@@ -25,6 +47,17 @@ def vxvy2vrvphi(x,y,vx,vy):
     vphi=vy*x/R-vx*y/R
 
     return vr,vphi
+
+def killLoky():
+    #returns the default signal of kill, which is 15
+    out=os.system('ps -ef|grep LokyProcess|awk -v n="`ps -ef|grep LokyProcess|wc -l`" \'NR<n-3{print $2}\'|xargs kill')
+    if out==15:
+        success="BANGARANG"
+    else:
+        success='Not successful'
+    print("")
+    print("Killing stray LokyProcesses from parallelisation: ",success)
+    return
 
 
 
@@ -47,22 +80,6 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
         aout=radprof[-1]*0.7
     emax=ecc[wheremax[0]]
     eout=np.mean(ecc[-20:])
-    #eccentricity parameters
-    e0=0.1
-    qecc=0.5
-    #vertical properties
-    hor=0.0
-    hormin=0.1*hor #sets the values between which hor oscillate
-    hormax=hor
-    parh=1./e0 #rules strength of artificially prescribed h perturbations due to ecc
-    parvz=1./e0 #same as above but for vz
-    flaring=0*0.25
-    #phase parameters 
-    varpi0=0.*np.pi/2.
-    orbitfrac=0
-    ###########
-    G=1.
-    M=1.
 #    import pdb
   #  pdb.set_trace() 
     #grid properties
@@ -160,8 +177,11 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
                 asoli=-1
 
             return asoli
-        asol = Parallel(n_jobs=nproc)(delayed(root_a_int)(i) for i in range(len(x)))
+        with Parallel(n_jobs=multiprocessing.cpu_count()) as parallel:
+            asol = parallel(delayed(root_a_int)(i) for i in range(len(x)))
 
+        #kill remaining loky processes from joblib parallelisation
+        killLoky()
         return np.array(asol),phi
 
     def check_a(x,y,aa):
@@ -215,6 +235,6 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     v1v=rot_x(vv,i0)
     v1vbottom=rot_x(vvbottom,i0)
 
-    return x1v,v1v,selectxya,a,e,varpi,sigma_a
+    return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a
 
 

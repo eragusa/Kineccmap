@@ -4,6 +4,7 @@ import os
 import sys
 import discEccanalysis_pysplash as de
 import genvecc as gv
+#import vertical_structure as vs
 
 name=sys.argv[1]
  
@@ -51,14 +52,21 @@ sigma=res['sigmaA'][index[0],:]
 wheremax=np.nonzero(sigma==np.max(sigma))
 
 #phase=np.ones(len(ecc))*phase[wheremax[0]]
-x1v,v1v,selectxya,a,e,varpi,sigma_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,radii,nprocs=20)
+x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,radii,nprocs=20)
 
+Rgr=np.sqrt(xgr**2+ygr**2)
+thetagr=np.arctan2(ygr,xgr)
+vxcirc,vycirc,vmod=gv.vcircular(Rgr,thetagr)
 vyplan=vy.reshape(nx*ny)[selectxya]
 vxplan=vx.reshape(nx*ny)[selectxya]
+vycircplan=vycirc.reshape(nx*ny)[selectxya]
+vmodplan=vmod.reshape(nx*ny)[selectxya]
 densityplan=density.reshape(nx*ny)[selectxya]
 xgrplan=xgr.reshape(nx*ny)[selectxya]
 ygrplan=ygr.reshape(nx*ny)[selectxya]
-
+vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v1v[0,:],v1v[1,:])
+vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
+#H,vz=calculate_vertical_structure(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma)
 
 #whattoplot=selectxya.reshape()
 velmax=v1v[1,:].max()*0.9
@@ -72,38 +80,60 @@ plt.tricontour(xgrplan,ygrplan,vyplan,levels=20, linewidths=0.5, colors='k')
 plt.title('$\\Delta v_y$')
 plt.axis('equal')
 
-plt.figure(2)
-norm=velmax/0.9
-velmax=(vyplan-v1v[1,:]).max()*0.9
+velmax=v1v[1,:].max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=(vyplan-v1v[1,:])/norm,cmap="RdBu_r",vmin=velmin/norm,vmax=velmax/norm)
+plt.figure(11)
+plt.scatter(xgrplan,ygrplan,c=(vyplan-vycircplan),cmap="RdBu_r",vmin=velmin,vmax=velmax)
 #plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 #plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
-plt.tricontour(xgrplan,ygrplan,(vyplan-v1v[1,:])/norm,levels=20, linewidths=0.5, colors='k')
-plt.title('$\\Delta v_y/v_{max}$')
+plt.tricontour(xgrplan,ygrplan,vyplan,levels=20, linewidths=0.5, colors='k')
+plt.title('$\\Delta v_{y,circ}$')
 plt.axis('equal')
 
-vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v1v[0,:],v1v[1,:])
-vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
-vphimax=vphi.max()
-velmax=(vphi-vphisim).max()*0.9
+plt.figure(2)
+#norm=velmax/0.9
+velmax=0.2#(vyplan-v1v[1,:]).max()*0.9
+velmin=-velmax
+plt.scatter(xgrplan,ygrplan,c=(vyplan-v1v[1,:])/vphi,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.colorbar()
+#plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
+plt.tricontour(xgrplan,ygrplan,(vyplan-v1v[1,:])/vphi,levels=20, linewidths=0.5, colors='k')
+plt.title('$\\Delta v_y/v_{y}$')
+plt.axis('equal')
+
+plt.figure(22)
+#norm=velmax/0.9
+velmax=0.2#(vyplan-v1v[1,:]).max()*0.9
+velmin=-velmax
+plt.scatter(xgrplan,ygrplan,c=(vyplan-vycircplan)/vphi,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.colorbar()
+#plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
+plt.tricontour(xgrplan,ygrplan,(vyplan-v1v[1,:])/vphi,levels=20, linewidths=0.5, colors='k')
+plt.title('$\\Delta v_y/v_{y}$')
+plt.axis('equal')
+
+
+vphimax=1#vphi.max()
+velmax=0.2#(vphi-vphisim).max()*0.9
 velmin=-velmax
 plt.figure(3)
-plt.scatter(xgrplan,ygrplan,c=(vphisim-vphi)/vphimax,cmap="RdBu_r",vmin=velmin/vphimax,vmax=velmax/vphimax)
+plt.scatter(xgrplan,ygrplan,c=(vphisim-vphi)/vphi,cmap="RdBu_r",vmin=velmin/vphimax,vmax=velmax/vphimax)
 plt.colorbar()
-plt.tricontour(xgrplan,ygrplan,(vphi-vphisim)/vphimax,levels=20, linewidths=0.5, colors='k')
-plt.title('$\\Delta v_\\phi/v_{\\phi,max}$')
+plt.tricontour(xgrplan,ygrplan,(vphi-vphisim)/vphi,levels=20, linewidths=0.5, colors='k')
+plt.title('$\\Delta v_\\phi/v_{\\phi}$')
 plt.axis('equal')
 
-vrmax=vr.max()
-velmax=(vr-vrsim).max()*0.9
+vrmax=1.#vr.max()
+velmax=0.2#(vr-vrsim).max()*0.9
 velmin=-velmax
 plt.figure(4)
-plt.scatter(xgrplan,ygrplan,c=(vrsim-vr)/vrmax,cmap="RdBu_r",vmin=velmin/vrmax,vmax=velmax/vrmax)
+plt.scatter(xgrplan,ygrplan,c=(vrsim-vr)/vphi,cmap="RdBu_r",vmin=velmin/vrmax,vmax=velmax/vrmax)
 plt.colorbar()
-plt.tricontour(xgrplan,ygrplan,(vr-vrsim)/vrmax,levels=20, linewidths=0.5, colors='k')
-plt.title('$\\Delta v_r/v_{r,max}$')
+plt.tricontour(xgrplan,ygrplan,(vr-vrsim)/vphi,levels=20, linewidths=0.5, colors='k')
+plt.title('$\\Delta v_r/v_{\\phi}$')
 plt.axis('equal')
 
 dmax=((vrsim-vr)*densityplan).max()  
