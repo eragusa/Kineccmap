@@ -123,7 +123,10 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     def rot_x(x,theta):
         rotmatr_x=np.array([[1, 0, 0],[0,np.cos(theta),-np.sin(theta)],[0,np.sin(theta),np.cos(theta)]])
         return np.matmul(rotmatr_x,x)
-    
+
+    #Note that we fit with chebyshev also to smooth out the functions
+    #Simple interpolation would be too rough to be used in the equation solver
+    #for passing from xy-->a,phi     
     ee=np.polynomial.Chebyshev.fit(radprof,ecc,npol)
     def e(a):
         return ee(a)*(a<radprof[-int(frgrid*len(radprof))])
@@ -200,7 +203,7 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
                 try: 
                     asoli=newton(func_to_root,Rguess,maxiter=50,tol=0.005,args=(R,phi,i)) #R[i] is the initial guess 
                 except RuntimeError: 
-                    print("Newton failed at R: ",R[i]," at i:",i," trying bisect")   
+                    #print("Newton failed at R: ",R[i]," at i:",i," trying bisect")   
                     asoli=bisect(func_to_root,R[i]*(1-0.5),R[i]*(1+0.5),maxiter=50,args=(R,phi,i)) #R[i] is the initial guess 
             else:
                 asoli=-1

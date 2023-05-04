@@ -6,50 +6,45 @@ import discEccanalysis_pysplash as de
 import genvecc as gv
 #import vertical_structure as vs
 
-img='png'
-
-name=sys.argv[1]
+#size of ellipses
+ain=2.
+aout=10.
+#eccentricity parameters
+e0=0.27
+qecc=0.5
+#vertical properties
+hor=0.1
+hormin=0.1*hor #sets the values between which hor oscillate
+hormax=hor
+parh=1./e0 #rules strength of artificially prescribed h perturbations due to ecc
+parvz=1./e0#same as above but for vz
+flaring=0.25
+#phase parameters 
+varpi0=0.*np.pi/2.
+orbitfrac=0.
+###########
+G=1.
+M=1.
+#######
+xmin=-aout*(1.+e0)
+xmax=aout*(1.+e0)
+ymin=xmin
+ymax=xmax
+zmin=xmin
+zmax=xmax
  
-os.system("splash -p nonlog "+name+" -o ascii -r 6 -dev /png")
-os.system("splash -p nonlog "+name+" -o ascii -r 7 -dev /png")
-os.system("splash -p nonlog "+name+" -o ascii -r 8 -dev /png")
+nx=200
+ny=nx
 
-#load quantities
-density=np.loadtxt(name+'_columndensity_proj.pix')
-vx=np.loadtxt(name+'_vx_proj.pix')
-vy=np.loadtxt(name+'_vy_proj.pix')
-
-#create x-y axes
-with open(name+'_columndensity_proj.pix') as f:
-    for i in range(20):
-        xstr=f.readline()
-        if('x axis' in xstr):
-            loc=xstr.find('min = ')
-            xmin=float(xstr[loc+6:loc+6+14])
-            loc=xstr.find('max = ')
-            xmax=float(xstr[loc+6:loc+6+14])
-        if('y axis' in xstr):
-            loc=xstr.find('min = ')
-            ymin=float(xstr[loc+6:loc+6+14])
-            loc=xstr.find('max = ')
-            ymax=float(xstr[loc+6:loc+6+14])
-        if('time' in xstr):
-            loc=xstr.find('time = ')
-            time=float(xstr[loc+7:loc+7+14])
-         
-nx=density.shape[1]
-ny=density.shape[0]
 x=np.linspace(xmin,xmax,nx)
 y=np.linspace(ymin,ymax,ny)
  
 xgr,ygr=np.meshgrid(x,y)
 
-res=de.loadHDF5('datasim.h5')
-index,t=de.matchtime(res['time'],np.array([time]))
+radii=np.linspace(ain,aout,200)
 
 ecc=np.abs(res['evecA'][index[0],:])
 phase=np.angle(res['evecA'][index[0],:])
-radii=res['radProf'][:]
 sigma=res['sigmaA'][index[0],:]
 wheremax=np.nonzero(sigma==np.max(sigma))
 

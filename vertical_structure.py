@@ -4,10 +4,10 @@ import eccentric_disc.VerticalStructure as evert
 from scipy.interpolate import RegularGridInterpolator
 import pdb
 
-a0=2.
+a0=2.#6. #be careful R_ref not always coincides with R_in
 GM=1.
-H0=0.05
-l=0.25 #disc flaring
+H0=0.05 #0.04
+l=0.25 #0. #disc flaring
 
 def Omega(a):
     return np.sqrt(GM/a**3)
@@ -82,4 +82,4 @@ def calculate_vertical_structure(x,y,ainp,e,cosvarpi,sinvarpi,sigma):
     vz_xy=vz_func(ainp,Eanom_xy_shift)
         
     return H_xy,vz_xy
-       
+      
