@@ -9,6 +9,7 @@ from joblib import Parallel, delayed
 from vertical_structure import Omega,cs,Hcirc
 import multiprocessing
 import os
+import useful_param as up
 import pdb
 
 #Note that interpolated functions _a are defined to not return 0 for any "a" larger than (1-frgrid) of the radprof.
@@ -16,27 +17,27 @@ import pdb
 frgrid=0.05
 
 #eccentricity parameters
-e0=0.1
-qecc=0.5
+e0=up.e0
+qecc=up.qecc
 #vertical properties
-hor=0.0
-hormin=0.1*hor #sets the values between which hor oscillate
-hormax=hor
-parh=1./e0 #rules strength of artificially prescribed h perturbations due to ecc
-parvz=1./e0 #same as above but for vz
-flaring=0*0.25
+#hor=0.0
+#hormin=0.1*hor #sets the values between which hor oscillate
+#hormax=hor
+#parh=1./e0 #rules strength of artificially prescribed h perturbations due to ecc
+#parvz=1./e0 #same as above but for vz
+#flaring=0*0.25
 #phase parameters 
-varpi0=0.*np.pi/2.
-orbitfrac=0
+#varpi0=0.*np.pi/2.
+#orbitfrac=0
 ###########
-G=1.
-M=1.
+G=up.G
+M=up.M
 
 #orienting your disc in space
-i0=0*np.pi/3
-PA0=0*np.pi/3
+#i0=0*np.pi/3
+#PA0=0*np.pi/3
 #for channel maps
-nchannels=20
+#nchannels=20
 
 #Npol for interpolation
 npol=20
@@ -112,17 +113,17 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     zmin=xmin
     zmax=xmax
     
-    def rot_z(x,theta):
-        rotmatr_z=np.array([[np.cos(theta),-np.sin(theta),0],[np.sin(theta),np.cos(theta),0],[0,0,1]])
-        return np.matmul(rotmatr_z,x)
+#    def rot_z(x,theta):
+#        rotmatr_z=np.array([[np.cos(theta),-np.sin(theta),0],[np.sin(theta),np.cos(theta),0],[0,0,1]])
+#        return np.matmul(rotmatr_z,x)
     
-    def rot_y(x,theta):
-        rotmatr_y=np.array([[np.cos(theta),0,np.sin(theta)],[0,1,0],[-np.sin(theta),0,np.cos(theta)]]) 
-        return np.matmul(rotmatr_y,x)
+#    def rot_y(x,theta):
+#        rotmatr_y=np.array([[np.cos(theta),0,np.sin(theta)],[0,1,0],[-np.sin(theta),0,np.cos(theta)]]) 
+#        return np.matmul(rotmatr_y,x)
     
-    def rot_x(x,theta):
-        rotmatr_x=np.array([[1, 0, 0],[0,np.cos(theta),-np.sin(theta)],[0,np.sin(theta),np.cos(theta)]])
-        return np.matmul(rotmatr_x,x)
+#    def rot_x(x,theta):
+#        rotmatr_x=np.array([[1, 0, 0],[0,np.cos(theta),-np.sin(theta)],[0,np.sin(theta),np.cos(theta)]])
+#        return np.matmul(rotmatr_x,x)
 
     #Note that we fit with chebyshev also to smooth out the functions
     #Simple interpolation would be too rough to be used in the equation solver
@@ -161,18 +162,18 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     def dPda1rhoa_a(a):
         return dPda1rhoa_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
                  
-#    pdb.set_trace()
     def R_func(a,theta):
         return a*(1-e(a)**2)/(1.+e(a)*(np.cos(theta)*cosvarpi(a)+np.sin(theta)*sinvarpi(a)))
     
-    def hor_func(a,theta):
-        return hor*(a[:]/ain)**(1+flaring)
-        #(hormin+(hormax-hormin)*(1-parh*0.5*e(a)*np.cos(theta-varpi(a[:]))))
+#    def hor_func(a,theta):
+#        return hor*(a[:]/ain)**(1+flaring)
+#        #(hormin+(hormax-hormin)*(1-parh*0.5*e(a)*np.cos(theta-varpi(a[:]))))
     
     def z_scale(a,theta):
-        #return hor*(a[:]/ain)**(1+flaring)
-        #return hor_func(a,theta)*(a[:]/ain)**(1+flaring)
-        return hor_func(a,theta)*(1.-3.*e(a)*(np.cos(theta)*cosvarpi(a)+np.sin(theta)*sinvarpi(a)))
+        return  np.zeros(len(a))
+#        #return hor*(a[:]/ain)**(1+flaring)
+#        #return hor_func(a,theta)*(a[:]/ain)**(1+flaring)
+#        return hor_func(a,theta)*(1.-3.*e(a)*(np.cos(theta)*cosvarpi(a)+np.sin(theta)*sinvarpi(a)))
     
     def vR_func(a,theta):
         return np.sqrt(G*M/a[:])*e(a[:])*(np.sin(theta[:])*cosvarpi(a)-np.cos(theta[:])*sinvarpi(a))/np.sqrt(1-e(a[:])**2)
@@ -181,9 +182,9 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
         return np.sqrt(G*M/a[:])*(1.+e(a[:])*(np.cos(theta)*cosvarpi(a)+np.sin(theta)*sinvarpi(a)))/np.sqrt(1-e(a[:])**2)
     
     def vz_func(a,theta):
-        #return  np.zeros(len(a))
-        #return np.sqrt(G*M/a)*e(a)*hor*np.sin(theta-varpi(a[:]))*parvz
-        return 3.*e(a)*np.sqrt(G*M/a**3)*(np.sin(theta[:])*cosvarpi(a)-np.cos(theta[:])*sinvarpi(a))*z_scale(a,theta)
+        return  np.zeros(len(a))
+#        #return np.sqrt(G*M/a)*e(a)*hor*np.sin(theta-varpi(a[:]))*parvz
+#        #return 3.*e(a)*np.sqrt(G*M/a**3)*(np.sin(theta[:])*cosvarpi(a)-np.cos(theta[:])*sinvarpi(a))*z_scale(a,theta)
 
 
     def func_to_root(aa,R,phi,i):
@@ -201,14 +202,14 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
             makeadvancementbar(i,Np=len(x))
             if(selection[i]):
                 try: 
-                    asoli=newton(func_to_root,Rguess,maxiter=50,tol=0.005,args=(R,phi,i)) #R[i] is the initial guess 
+                    asoli=newton(func_to_root,Rguess,maxiter=50,tol=0.005*ain,args=(R,phi,i)) #R[i] is the initial guess 
                 except RuntimeError: 
                     #print("Newton failed at R: ",R[i]," at i:",i," trying bisect")   
                     asoli=bisect(func_to_root,R[i]*(1-0.5),R[i]*(1+0.5),maxiter=50,args=(R,phi,i)) #R[i] is the initial guess 
             else:
                 asoli=-1
-
             return asoli
+#        pdb.set_trace()
         with Parallel(n_jobs=multiprocessing.cpu_count()) as parallel:
             asol = parallel(delayed(root_a_int)(i) for i in range(len(x)))
 
@@ -251,21 +252,21 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,radprofinp,nprocs=10,aout
     
     #Create arrays for applying rotations and mirror the disc also on the negativ z-axis
     xv=np.array([x,y,z])
-    xvbottom=np.array([x,y,-z])
+#    xvbottom=np.array([x,y,-z])
     vv=np.array([vx,vy,vz])
-    vvbottom=np.array([vx,vy,-vz])
+#    vvbottom=np.array([vx,vy,-vz])
     
     
     #Rotate positions for inclination and PA
-    x0v=rot_x(xv,i0)
-    x0vbottom=rot_x(xvbottom,i0)
-    x1v=rot_z(x0v,PA0) 
-    x1vbottom=rot_z(x0vbottom,PA0) 
+#    x0v=rot_x(xv,i0)
+#    x0vbottom=rot_x(xvbottom,i0)
+    x1v=xv#rot_z(x0v,PA0) 
+#    x1vbottom=rot_z(x0vbottom,PA0) 
     
     #Rotate velocities for inclination
     #NB you do not need to rotate velocities along z for PA, rotations along z do not change v_z
-    v1v=rot_x(vv,i0)
-    v1vbottom=rot_x(vvbottom,i0)
+    v1v=vv#rot_x(vv,i0)
+#    v1vbottom=rot_x(vvbottom,i0)
 
     return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a,dPda1rhoa_a
 

@@ -7,9 +7,10 @@ import genvecc as gv
 #import vertical_structure as vs
 
 img='png'
+folderres='./analysis_paper/azimuth'
 
 name=sys.argv[1]
- 
+
 os.system("splash -p nonlog "+name+" -o ascii -r 6 -dev /png")
 os.system("splash -p nonlog "+name+" -o ascii -r 7 -dev /png")
 os.system("splash -p nonlog "+name+" -o ascii -r 8 -dev /png")
@@ -36,12 +37,12 @@ with open(name+'_columndensity_proj.pix') as f:
         if('time' in xstr):
             loc=xstr.find('time = ')
             time=float(xstr[loc+7:loc+7+14])
-         
+
 nx=density.shape[1]
 ny=density.shape[0]
 x=np.linspace(xmin,xmax,nx)
 y=np.linspace(ymin,ymax,ny)
- 
+
 xgr,ygr=np.meshgrid(x,y)
 
 res=de.loadHDF5('datasim.h5')
@@ -89,7 +90,7 @@ plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.title('$v_{y,{\\rm sim}}-v_y$')
 plt.axis('equal')
-plt.savefig('./figures_for_poster/azimuth/Dvy.'+img,dpi=400)
+plt.savefig(folderre+'/Dvy.'+img,dpi=400)
 
 velmax=v1v[1,:].max()*0.9
 velmin=-velmax
@@ -103,7 +104,7 @@ plt.title('$v_{y,{\\rm sim}}-v_{y,{\\rm circ}}$')
 plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.savefig('./figures_for_poster/azimuth/Dvy_circ.'+img,dpi=400)
+plt.savefig(folderres+'/Dvy_circ.'+img,dpi=400)
 
 plt.figure(2)
 #norm=velmax/0.9
@@ -118,7 +119,7 @@ plt.title('$(v_{y,{\\rm sim}}-v_y)/v_{\\phi}$')
 plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.savefig('./figures_for_poster/azimuth/Dvy_vphi.'+img,dpi=400)
+plt.savefig(folderres+'/Dvy_vphi.'+img,dpi=400)
 
 plt.figure(22)
 #norm=velmax/0.9
@@ -133,7 +134,7 @@ plt.title('$(v_{y,{\\rm sim}}-v_{y,{\\rm circ}})/v_{\\phi}$')
 plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.savefig('./figures_for_poster/azimuth/Dvy_circ_vphi.'+img,dpi=400)
+plt.savefig(folderres+'/Dvy_circ_vphi.'+img,dpi=400)
 
 plt.figure(23)
 #norm=velmax/0.9
@@ -148,7 +149,7 @@ plt.title('$(v_{y,{\\rm sim}}-v_{y,{\\rm press}})/v_{\\phi}$')
 plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.savefig('./figures_for_poster/azimuth/Dvy_press_vphi.'+img,dpi=400)
+plt.savefig(folderres+'/Dvy_press_vphi.'+img,dpi=400)
 
 vphimax=1#vphi.max()
 velmax=0.2#(vphi-vphisim).max()*0.9
@@ -161,7 +162,7 @@ plt.title('$(v_{\\phi,{\\rm sim}}-v_\\phi)/v_{\\phi}$')
 plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.savefig('./figures_for_poster/azimuth/Dvphi_vphi.'+img,dpi=400)
+plt.savefig(folderres+'/Dvphi_vphi.'+img,dpi=400)
 
 vphimax=1#vphi.max()
 velmax=0.2#(vphi-vphisim).max()*0.9
@@ -174,7 +175,7 @@ plt.title('$(v_{\\phi,{\\rm sim}}-v_{\\phi,{\\rm press}})/v_{\\phi}$')
 plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.savefig('./figures_for_poster/azimuth/Dvphi_press_vphi.'+img,dpi=400)
+plt.savefig(folderres+'/Dvphi_press_vphi.'+img,dpi=400)
 
 vphimax=1#vphi.max()
 velmax=0.2#(vphi-vphisim).max()*0.9
@@ -187,7 +188,7 @@ plt.title('$(v_{\\phi,{\\rm sim}}-v_{\\rm circ})/v_{\\phi}$')
 plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.savefig('./figures_for_poster/azimuth/Dvphi_circ_vphi.'+img,dpi=400)
+plt.savefig(folderres+'/Dvphi_circ_vphi.'+img,dpi=400)
 
 
 
@@ -201,26 +202,26 @@ plt.savefig('./figures_for_poster/azimuth/Dvphi_circ_vphi.'+img,dpi=400)
 #plt.title('$(v_{r,sim}-v_r)/v_{\\phi}$')
 #plt.axis('equal')
 #
-#dmax=((vrsim-vr)*densityplan).max()  
+#dmax=((vrsim-vr)*densityplan).max()
 #plt.figure(5)
-#plt.scatter(xgrplan,ygrplan,c=densityplan*(vrsim-vr),cmap="RdBu_r") 
+#plt.scatter(xgrplan,ygrplan,c=densityplan*(vrsim-vr),cmap="RdBu_r")
 #plt.colorbar()
 #plt.title('$\\Sigma(v_{r,sim}-v_r)$')
 #plt.axis('equal')
 #
-#dmax=((vphisim-vphi)*densityplan).max()  
-#plt.figure(6) 
-#plt.scatter(xgrplan,ygrplan,c=densityplan*(vphisim-vphi),cmap="RdBu_r",vmin=-dmax,vmax=dmax) 
-#plt.colorbar() 
+#dmax=((vphisim-vphi)*densityplan).max()
+#plt.figure(6)
+#plt.scatter(xgrplan,ygrplan,c=densityplan*(vphisim-vphi),cmap="RdBu_r",vmin=-dmax,vmax=dmax)
+#plt.colorbar()
 #plt.title('$\\Sigma(v_{\\phi,sim}-v_\\phi)$')
-#plt.axis('equal') 
-#  
+#plt.axis('equal')
 #
-#plt.figure(7) 
-#plt.scatter(xgrplan,ygrplan,c=densityplan,cmap="RdBu_r") 
-#plt.colorbar() 
+#
+#plt.figure(7)
+#plt.scatter(xgrplan,ygrplan,c=densityplan,cmap="RdBu_r")
+#plt.colorbar()
 #plt.title('$\\Sigma$')
-#plt.axis('equal') 
+#plt.axis('equal')
 #
 velmax=v1v[1,:].max()*0.9
 velmin=-velmax
@@ -234,7 +235,7 @@ plt.title('$v_{y,teor}$')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.axis('equal')
-plt.savefig('./figures_for_poster/azimuth/vyteor.'+img,dpi=400)
+plt.savefig(folderres+'/vyteor.'+img,dpi=400)
 
 plt.figure(9)
 plt.scatter(xgrplan,ygrplan,c=vyplan,cmap="RdBu_r",vmin=velmin,vmax=velmax)
@@ -246,10 +247,10 @@ plt.title('$v_{y,sim}$')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.axis('equal')
-plt.savefig('./figures_for_poster/azimuth/vysim.'+img,dpi=400)
+plt.savefig(folderres+'/vysim.'+img,dpi=400)
 
 
 #plt.draw()
-#plt.pause(1) 
+#plt.pause(1)
 #input("<Hit enter to close the plots>")
 #plt.close('all')

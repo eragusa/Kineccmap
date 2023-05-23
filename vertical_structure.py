@@ -2,15 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import eccentric_disc.VerticalStructure as evert
 from scipy.interpolate import RegularGridInterpolator
+import useful_param as up
 import pdb
 
-a0=2.#6. #be careful R_ref not always coincides with R_in
-GM=1.
-H0=0.05 #0.04
-l=0.25 #0. #disc flaring
+a0=up.ain #6. #be careful R_ref not always coincides with R_in
+G=up.G
+M=up.M
+H0=up.hor #0.04
+l=up.flaring #0. #disc flaring
 
 def Omega(a):
-    return np.sqrt(GM/a**3)
+    return np.sqrt(G*M/a**3)
 
 def Hcirc(a):
     return H0*(a/a0)**l*a

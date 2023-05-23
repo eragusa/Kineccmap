@@ -12,15 +12,3 @@ def rot_x(x,theta):
     rotmatr_x=np.array([[1, 0, 0],[0,np.cos(theta),-np.sin(theta)],[0,np.sin(theta),np.cos(theta)]])
     return np.matmul(rotmatr_x,x)
 
-def e(a):
-    ecc0=e0
-    a0=ain
-    return e0*(a/a0)**(-qecc)
-
-def varpi(a):
-    p=varpi0+2*np.pi*orbitfrac*(a-ain)/(aout-ain)
-    return p
-
-def R_func(a,theta):
-    return a*(1-e(a)**2)/(1.+e(a)*np.cos(theta-varpi(a)))
-
