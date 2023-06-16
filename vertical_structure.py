@@ -84,4 +84,38 @@ def calculate_vertical_structure(x,y,ainp,e,cosvarpi,sinvarpi,sigma):
     vz_xy=vz_func(ainp,Eanom_xy_shift)
         
     return H_xy,vz_xy
-      
+
+def vert_struct_solver(H0,e0):
+    Omega0=1. #used for cs=H0*Omega0
+    Eanom_arr=np.linspace(0,2*np.pi,500)
+    f_arr=np.linspace(0,2*np.pi,500)
+    # vertical structure solver
+    vsolver = evert.VerticalStructureIsothermal()
+    vsolver.coord_system = 'AE'
+
+    vsolver.h0=0.19629700736631261 # this is potentially a more useful initial guess
+    vsolver.e=e0
+    res = vsolver.solve()
+    
+     
+    ht, dh = vsolver(Eanom_arr)
+    
+    #obtain physically meaningful quantities H=ht*Hcirc, v_z=dh/ht*cs
+    H_arr=H0*ht
+    vz_arr=dh*H0*Omega0 #dharr/htarr*cs(amesh)   
+
+    #need now to plot it as eccentric anom
+    interp_H = np.polynomial.Chebyshev.fit(Eanom_arr,H_arr,80)
+    def H_func(EE):
+        return interp_H(EE)
+
+    interp_vz =np.polynomial.Chebyshev.fit(Eanom_arr,vz_arr,80)
+    def vz_func(EE):
+        return interp_vz(EE)
+
+    Eanom_shift=np.mod(2*np.arctan(np.sqrt((1 - e0) / (1 + e0)) * np.tan(f_arr/2)),2*np.pi)
+    
+    H_anom=H_func(Eanom_shift)
+    vz_anom=vz_func(Eanom_shift)
+
+    return f_arr,H_anom,vz_anom   

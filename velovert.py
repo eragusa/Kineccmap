@@ -132,7 +132,7 @@ plt.title('$H_{\\rm sim}/a$')
 plt.savefig(folderres+'/HRsim.'+img,dpi=400)
 
 plt.figure(4)
-velmax=vz.max()*0.9
+velmax=vz.max()*0.5
 velmin=-velmax
 plt.scatter(xgrplan,ygrplan,c=vzplan,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
@@ -154,17 +154,28 @@ plt.savefig(folderres+'/DH_H.'+img,dpi=400)
 plt.figure(6)
 velmax=0.1#vz.max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=(vzplan-np.abs(vz))/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm teor}}|)/v_{\\phi}$')
 plt.savefig(folderres+'/Dvz_vphi.'+img,dpi=400)
 
+plt.figure(62)
+velmax=0.1#vz.max()*0.9
+velmin=-velmax
+plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vphi),cmap="RdBu_r")
+plt.colorbar()
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm teor}}|)/v_{\\phi}$')
+plt.savefig(folderres+'/Dvz_vphi_highcontrast.'+img,dpi=400)
+
+
 plt.figure(7)
 velmax=0.05#vz.max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=(np.abs(vz))/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.scatter(xgrplan,ygrplan,c=vz/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -174,7 +185,7 @@ plt.savefig(folderres+'/vzteor_vphi.'+img,dpi=400)
 plt.figure(72)
 velmax=0.05#vz.max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan))/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.scatter(xgrplan,ygrplan,c=(vzplan)/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')

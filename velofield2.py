@@ -78,7 +78,7 @@ vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
 #H,vz=calculate_vertical_structure(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma)
 
 #whattoplot=selectxya.reshape()
-velmax=v1v[1,:].max()*0.9
+velmax=v1v[1,:].max()*0.1
 velmin=-velmax
 plt.figure(1)
 plt.scatter(xgrplan,ygrplan,c=(vyplan-v1v[1,:]),cmap="RdBu_r",vmin=velmin,vmax=velmax)
@@ -90,9 +90,9 @@ plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.title('$v_{y,{\\rm sim}}-v_y$')
 plt.axis('equal')
-plt.savefig(folderre+'/Dvy.'+img,dpi=400)
+plt.savefig(folderres+'/Dvy.'+img,dpi=400)
 
-velmax=v1v[1,:].max()*0.9
+velmax=v1v[1,:].max()*0.1
 velmin=-velmax
 plt.figure(11)
 plt.scatter(xgrplan,ygrplan,c=(vyplan-vycircplan),cmap="RdBu_r",vmin=velmin,vmax=velmax)
