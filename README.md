@@ -16,3 +16,5 @@ run plot_ellipses.py --- Plots a set of nested ellipses with e(a) and varpi(a) r
 
 run generate_ellipses_xy.py --- similar to velofield2.py but using power-law for e(a) and linear varpi(a). To change it change
 the parameters in the preamble of the file.
+
+run harmonic_solve.py solves an implementation of the equation for the vertical motion in the paper.

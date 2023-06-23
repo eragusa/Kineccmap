@@ -4,10 +4,13 @@ import os
 import sys
 import discEccanalysis_pysplash as de
 import genvecc as gv
+import morphology as morph
 #import vertical_structure as vs
 
 img='png'
-folderres='./analysis_paper/azimuth'
+#folderres='./analysis_paper/azimuth'
+#folderres='./figures_for_poster/azimuth'
+folderres='./sim5A2000/azimuth'
 
 name=sys.argv[1]
 
@@ -51,14 +54,25 @@ index,t=de.matchtime(res['time'],np.array([time]))
 ecc=np.abs(res['evecA'][index[0],:])
 phase=np.angle(res['evecA'][index[0],:])
 radii=res['radProf'][:]
+#sigma=res['sigmaA'][index[0],:]
+#sigma is not actually the real sigma, but M_a which we calculate as follows
+mass=[]
+for i in range(res['discfracA'][index[0]].shape[0]):
+    mass.append(sum(res['discfracA'][index[0],:i]*res['Mdisc'][index[0]]))
+
+Ma=np.gradient(mass,radii)
 sigma=res['sigmaA'][index[0],:]
+
 wheremax=np.nonzero(sigma==np.max(sigma))
 
 #phase=np.ones(len(ecc))*phase[wheremax[0]]
-x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a,dPda1rhoa_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,radii,nprocs=20)
+x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda,dvpda,sigma_a,Ma_a,dPda1rhoa_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,Ma,radii,nprocs=20)
 
 Rgr=np.sqrt(xgr**2+ygr**2)
 thetagr=np.arctan2(ygr,xgr)
+#defining value of varpi and e for all cells
+varpi=np.arctan2(sinvarpi(a),cosvarpi(a))
+eccentricity=e(a)
 
 vxcirc,vycirc,vmod=gv.vcircular(Rgr,thetagr)
 vyplan=vy.reshape(nx*ny)[selectxya]
@@ -69,6 +83,7 @@ densityplan=density.reshape(nx*ny)[selectxya]
 
 xgrplan=xgr.reshape(nx*ny)[selectxya]
 ygrplan=ygr.reshape(nx*ny)[selectxya]
+thetaplan=thetagr.reshape(nx*ny)[selectxya]
 
 vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v1v[0,:],v1v[1,:])
 vphi_press=gv.pressure_corrected_vphi(a,vphi,dPda1rhoa_a)
@@ -76,6 +91,10 @@ vx_press,vy_press=gv.vrvphi2vxvy(xgrplan,ygrplan,vr,vphi_press)
 
 vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
 #H,vz=calculate_vertical_structure(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma)
+
+#Morphology
+J,alpha,q=morph.Jacobian_det(a,thetaplan,e,sinvarpi,cosvarpi,deda,dvpda)
+SigmaEcc=Ma_a(a)*gv.Omega0(a)/(2*np.pi*J*gv.Omega_orb(a,thetaplan,eccentricity,varpi))
 
 #whattoplot=selectxya.reshape()
 velmax=v1v[1,:].max()*0.1
@@ -237,7 +256,7 @@ plt.ylabel('$y$')
 plt.axis('equal')
 plt.savefig(folderres+'/vyteor.'+img,dpi=400)
 
-plt.figure(9)
+plt.figure(4)
 plt.scatter(xgrplan,ygrplan,c=vyplan,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 #plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
@@ -249,6 +268,93 @@ plt.ylabel('$y$')
 plt.axis('equal')
 plt.savefig(folderres+'/vysim.'+img,dpi=400)
 
+plt.figure(51)
+vmax=np.max(Ma/6.28)
+vmin=np.min(Ma/6.28)
+plt.scatter(xgrplan,ygrplan,c=SigmaEcc,vmin=vmin,vmax=vmax,cmap="inferno")
+plt.colorbar()
+plt.title('$\Sigma_{\\rm teor}(a,\phi)$')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.axis('equal')
+plt.savefig(folderres+'/Sigma_teor.'+img,dpi=400)
+
+plt.figure(52)
+plt.scatter(xgrplan,ygrplan,c=densityplan,vmin=vmin,vmax=vmax,cmap="inferno")
+plt.colorbar()
+plt.title('$\Sigma_{\\rm sim}(a,\phi)$')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.axis('equal')
+plt.savefig(folderres+'/Sigma_sim.'+img,dpi=400)
+
+plt.figure(53)
+vmax=np.max(q)
+vmin=0
+plt.scatter(xgrplan,ygrplan,c=q,vmin=vmin,vmax=vmax)
+plt.colorbar()
+plt.title('$q_{\\rm teor}(a,\phi)$')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.axis('equal')
+plt.savefig(folderres+'/q_teor.'+img,dpi=400)
+
+plt.figure(54)
+vmax=3.14
+vmin=-3.14
+plt.scatter(xgrplan,ygrplan,c=alpha+varpi,vmin=vmin,vmax=vmax,cmap='hsv')
+plt.colorbar()
+plt.title('$\\alpha_{\\rm teor}(a,\phi)$')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.axis('equal')
+plt.savefig(folderres+'/alpha_teor.'+img,dpi=400)
+
+plt.figure(61)
+plt.plot(radii,deda(radii),label='model')
+plt.xlabel('$a$')
+plt.ylabel('$deda$')
+plt.xlim([2,13])
+plt.ylim([-0.5,0.5])
+plt.legend()
+ax=plt.gca()
+#ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.savefig(folderres+'/deda.'+img,dpi=400)
+
+plt.figure(62)
+plt.plot(radii,dvpda(radii),label='model')
+plt.xlabel('$a$')
+plt.ylabel('$dvpda$')
+plt.xlim([2,13])
+plt.ylim([-1.5,1.5])
+plt.legend()
+ax=plt.gca()
+#ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.savefig(folderres+'/dvpda.'+img,dpi=400)
+
+plt.figure(63)
+plt.plot(radii,phase,label='simulation')
+plt.plot(radii,np.arctan2(sinvarpi(radii),cosvarpi(radii)),label='model')
+plt.xlabel('$a$')
+plt.ylabel('$\\varpi$')
+plt.xlim([2,13])
+plt.legend()
+plt.ylim([-3.20,3.20])
+ax=plt.gca()
+#ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.savefig(folderres+'/phasea.'+img,dpi=400)
+
+plt.figure(64)
+plt.plot(radii,ecc,label='simulation')
+plt.plot(radii,e(radii),label='model')
+plt.xlabel('$a$')
+plt.ylabel('$e$')
+plt.xlim([2,13])
+plt.legend()
+plt.ylim([0,0.35])
+ax=plt.gca()
+#ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.savefig(folderres+'/ea.'+img,dpi=400)
 
 #plt.draw()
 #plt.pause(1)

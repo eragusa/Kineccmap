@@ -45,11 +45,16 @@ radii=np.linspace(ain,aout,200)
 
 ecc=np.abs(res['evecA'][index[0],:])
 phase=np.angle(res['evecA'][index[0],:])
+mass=[]
+for i in range(res['discfracA'][index[0]].shape[0]):
+    mass.append(sum(res['discfracA'][index[0],:i]*res['Mdisc'][index[0]]))
+
+Ma=np.gradient(mass,radii)
 sigma=res['sigmaA'][index[0],:]
 wheremax=np.nonzero(sigma==np.max(sigma))
 
 #phase=np.ones(len(ecc))*phase[wheremax[0]]
-x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a,dPda1rhoa_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,radii,nprocs=20)
+x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda,dvpda,Ma_a,sigma_a,dPda1rhoa_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,Ma,radii,nprocs=20)
 
 Rgr=np.sqrt(xgr**2+ygr**2)
 thetagr=np.arctan2(ygr,xgr)

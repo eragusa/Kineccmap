@@ -7,7 +7,8 @@ import genvecc as gv
 import vertical_structure as vs
 
 img='png'
-folderres='./analysis_paper'
+#folderres='./analysis_paper'
+folderres='./sim5A2000'
 name=sys.argv[1]
 
 os.system("splash -p nonlog "+name+" -o ascii -r 6 -dev /png")
@@ -57,11 +58,18 @@ index,t=de.matchtime(res['time'],np.array([time]))
 ecc=np.abs(res['evecA'][index[0],:])
 phase=np.angle(res['evecA'][index[0],:])
 radii=res['radProf'][:]
+
+mass=[]
+for i in range(res['discfracA'][index[0]].shape[0]):
+    mass.append(sum(res['discfracA'][index[0],:i]*res['Mdisc'][index[0]]))
+
+Ma=np.gradient(mass,radii)
+
 sigma=res['sigmaA'][index[0],:]
 wheremax=np.nonzero(sigma==np.max(sigma))
 
 #phase=np.ones(len(ecc))*phase[wheremax[0]]
-x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,sigma_a,dPda1rhoa_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,radii,nprocs=20)
+x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda,dvpda,sigma_a,Ma_a,dPda1rhoa_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,Ma,radii,nprocs=20)
 
 vyplan=vy.reshape(nx*ny)[selectxya]
 vxplan=vx.reshape(nx*ny)[selectxya]
@@ -228,6 +236,19 @@ plt.ylim([-0.00001,sigma.max()+0.00001])
 ax=plt.gca()
 ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 plt.savefig(folderres+'/sigmaa.'+img,dpi=400)
+
+plt.figure(83)
+plt.plot(radii,Ma,label='simulation')
+plt.plot(radii,Ma_a(radii),label='model')
+plt.xlabel('$a$')
+plt.ylabel('$M_a$')
+plt.xlim([2,13])
+plt.legend()
+plt.ylim([-0.0001,Ma.max()+0.0001])
+ax=plt.gca()
+ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.savefig(folderres+'/Ma.'+img,dpi=400)
+
 
 
 #plt.draw()

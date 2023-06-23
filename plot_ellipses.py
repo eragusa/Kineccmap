@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 frgrid=0.05
 res=de.loadHDF5('datasim.h5')
 index=100
-ain=2.5
+ain=2.
 aout=6.
 na=20
 ecc=np.abs(res['evecA'][index,:])
