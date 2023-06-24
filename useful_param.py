@@ -1,7 +1,8 @@
 import numpy as np
 
 #size of ellipses
-ain=2.
+ain=2. #at the moment used as minimum radius beyond which strarting looking for the maximum density
+fracmax=0.2 #which percentage of density is used to define cavity edge
 aout=10.
 a0=2.
 #eccentricity parameters

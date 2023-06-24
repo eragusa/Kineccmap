@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import useful_param as up
 import pdb
+import interpolation as itp
 
 #Note that interpolated functions _a are defined to not return 0 for any "a" larger than (1-frgrid) of the radprof.
 #This is done to avoid weird behaviour of interpolated polynomials close to the boundary and beyond
@@ -101,16 +102,20 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     ymesh=y
 
 
-    fracmax=0.6 # at which fraction of max to take cavity size
-    wheremax=de.isclosetoArr(sigma,sigma.max()*fracmax,np.diff(sigma).max())[0]
-    radIn=radprof[wheremax[0]]
-    if ain==0: #if ain not passed take the inner edge of the cavity
-        ain=radIn
+    if ain==0: #if ain not passed 
+        ain=up.ain #take value from paramfile
+        index,radxxx=de.matchtime(radprof,np.array([ain])) #here used to match the value for ain
+        fracmax=up.fracmax # at which fraction of max to take cavity size
+        #we calculate the max beyond ain provided in paramfile, to avoid bad values in the cavity
+        wheremax=de.isclosetoArr(Ma,Ma[index[0]:].max()*fracmax,np.diff(Ma).max())[0]
+        radIn=radprof[wheremax[0]] 
+        ain=radIn #take the inner edge of the cavity
+        #ain=up.ain #take value from paramfile
     if aout==0: #define aout if not passed as argument as fraction of the outer grid radius
         aout=radprof[-1]*0.7
+
     emax=ecc[wheremax[0]]
     eout=np.mean(ecc[-20:])
-
     #grid properties
     xmin=-aout*(1.+e0)
     xmax=aout*(1.+e0)
@@ -134,32 +139,32 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     #Note that we fit with chebyshev also to smooth out the functions
     #Simple interpolation would be too rough to be used in the equation solver
     #for passing from xy-->a,phi
-    ee=np.polynomial.Chebyshev.fit(radprof,ecc,2*npol)
+    ee=itp.interpolator(radprof,ecc,2*npol)
     def e(a):
         return ee(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    varpivarpi=np.polynomial.Chebyshev.fit(radprof,phase,npol*2)
+    varpivarpi=itp.interpolator(radprof,phase,npol*2)
     def varpi(a):
         return varpivarpi(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    cos_interp=np.polynomial.Chebyshev.fit(radprof,np.cos(phase),npol*2)
+    cos_interp=itp.interpolator(radprof,np.cos(phase),npol*2)
     def cosvarpi(a):
         return cos_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    sin_interp=np.polynomial.Chebyshev.fit(radprof,np.sin(phase),npol*2)
+    sin_interp=itp.interpolator(radprof,np.sin(phase),npol*2)
     def sinvarpi(a):
         return sin_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    sigma_interp=np.polynomial.Chebyshev.fit(radprof,sigma,6*npol)
+    sigma_interp=itp.interpolator(radprof,sigma,6*npol)
     def sigma_a(a):
         return sigma_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    Ma_interp=np.polynomial.Chebyshev.fit(radprof,Ma,6*npol)
+    Ma_interp=itp.interpolator(radprof,Ma,6*npol)
     def Ma_a(a):
         return Ma_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
     deda=np.gradient(e(radprof),radprof)
-    deeda=np.polynomial.Chebyshev.fit(radprof,deda,6*npol)
+    deeda=itp.interpolator(radprof,deda,6*npol)
     def deda_f(a):
         return deeda(a)*(a<radprof[-int(frgrid*len(radprof))])
 
@@ -167,7 +172,7 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     #to avoid weird peaks take derivative of complex phase
     #then divide by same and take imaginary part
     dvarpida=np.imag(np.gradient(np.exp(1.j*vp),radprof)/np.exp(1.j*vp))
-    dvpvpda=np.polynomial.Chebyshev.fit(radprof,dvarpida,int(npol/2))
+    dvpvpda=itp.interpolator(radprof,dvarpida,int(npol/2))
     def dvpda_f(a):
         return dvpvpda(a)*(a<radprof[-int(frgrid*len(radprof))])
 
@@ -181,7 +186,7 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
                                 out=np.zeros_like(rho),where=rho>0.)\
                                 *radprof,\
                             posinf=0,neginf=0)
-    dPda1rhoa_interp=np.polynomial.Chebyshev.fit(radprof,dPda1rhoa,4*npol)
+    dPda1rhoa_interp=itp.interpolator(radprof,dPda1rhoa,4*npol)
     def dPda1rhoa_a(a):
         return dPda1rhoa_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
@@ -228,7 +233,20 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
                     asoli=newton(func_to_root,Rguess,maxiter=50,tol=0.005*ain,args=(R,phi,i)) #R[i] is the initial guess
                 except RuntimeError:
                     #print("Newton failed at R: ",R[i]," at i:",i," trying bisect")
-                    asoli=bisect(func_to_root,R[i]*(1-0.5),R[i]*(1+0.5),maxiter=50,args=(R,phi,i)) #R[i] is the initial guess
+                    try:
+                        print("Newton failed Runtime at R: ",R[i]," at i:",i," trying bisect")
+                        asoli=bisect(func_to_root,R[i]*(1-0.5),R[i]*(1+0.5),maxiter=50,args=(R,phi,i)) #R[i] initial guess
+                    except ValueError:
+                        print("bisect failed ValueError at R: ",R[i]," at i:",i," attributing asoli=-1")
+                        asoli=-1
+                except ValueError:
+                    try:
+                        print("Newton failed ValueError at R: ",R[i]," at i:",i," trying bisect")
+                        asoli=bisect(func_to_root,R[i]*(1-0.5),R[i]*(1+0.5),maxiter=50,args=(R,phi,i)) #R[i] initial guess
+                    except ValueError:
+                        print("bisect failed ValueError at R: ",R[i]," at i:",i," attributing asoli=-1")
+                        asoli=-1
+
             else:
                 asoli=-1
             return asoli
