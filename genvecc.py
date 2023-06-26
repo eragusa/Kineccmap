@@ -41,7 +41,7 @@ M=up.M
 #nchannels=20
 
 #Npol for interpolation
-npol=20
+npol=up.npol
 
 def Omega0(a):
     return np.sqrt(G*M/a**3)
@@ -139,7 +139,7 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     #Note that we fit with chebyshev also to smooth out the functions
     #Simple interpolation would be too rough to be used in the equation solver
     #for passing from xy-->a,phi
-    ee=itp.interpolator(radprof,ecc,2*npol)
+    ee=itp.interpolator(radprof,ecc,npol*2)
     def e(a):
         return ee(a)*(a<radprof[-int(frgrid*len(radprof))])
 
@@ -172,12 +172,12 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     #to avoid weird peaks take derivative of complex phase
     #then divide by same and take imaginary part
     dvarpida=np.imag(np.gradient(np.exp(1.j*vp),radprof)/np.exp(1.j*vp))
-    dvpvpda=itp.interpolator(radprof,dvarpida,int(npol/2))
+    dvpvpda=itp.interpolator(radprof,dvarpida,2*npol)
     def dvpda_f(a):
         return dvpvpda(a)*(a<radprof[-int(frgrid*len(radprof))])
 
 
-    rho=sigma#/Hcirc(radprof)
+    rho=Ma_a(radprof)/6.28/radprof#/Hcirc(radprof) #to be understood why Ma makes such a big difference despite it's quite the same
     cs2rho=cs(radprof)**2*rho
     dPda1rhoa=np.nan_to_num(\
                      np.divide(\

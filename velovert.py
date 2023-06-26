@@ -5,10 +5,11 @@ import sys
 import discEccanalysis_pysplash as de
 import genvecc as gv
 import vertical_structure as vs
+import useful_param as up
 
-img='png'
+img=up.img
 #folderres='./analysis_paper'
-folderres='./sim5A2000'
+folderres=up.folderres
 name=sys.argv[1]
 
 os.system("splash -p nonlog "+name+" -o ascii -r 6 -dev /png")
@@ -140,13 +141,13 @@ plt.title('$H_{\\rm sim}/a$')
 plt.savefig(folderres+'/HRsim.'+img,dpi=400)
 
 plt.figure(4)
-velmax=vz.max()*0.5
+velmax=vz.max()*0.9
 velmin=-velmax
 plt.scatter(xgrplan,ygrplan,c=vzplan,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$|v_{z,{\\rm sim}}|$')
+plt.title('$v_{z,{\\rm sim}}$')
 plt.savefig(folderres+'/vzsim.'+img,dpi=400)
 
 plt.figure(5)
@@ -187,7 +188,7 @@ plt.scatter(xgrplan,ygrplan,c=vz/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=vel
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$|v_{z,{\\rm teor}}|/v_{\\phi}$')
+plt.title('$v_{z,{\\rm teor}}/v_{\\phi}$')
 plt.savefig(folderres+'/vzteor_vphi.'+img,dpi=400)
 
 plt.figure(72)
@@ -197,7 +198,7 @@ plt.scatter(xgrplan,ygrplan,c=(vzplan)/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vm
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$|v_{z,{\\rm sim}}|/v_{\\phi}$')
+plt.title('$v_{z,{\\rm sim}}/v_{\\phi}$')
 plt.savefig(folderres+'/vzsim_vphi.'+img,dpi=400)
 
 ## A few more plots

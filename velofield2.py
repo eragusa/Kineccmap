@@ -1,16 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import os
 import sys
 import discEccanalysis_pysplash as de
 import genvecc as gv
 import morphology as morph
+import useful_param as up
 #import vertical_structure as vs
 
-img='png'
+img=up.img
 #folderres='./analysis_paper/azimuth'
 #folderres='./figures_for_poster/azimuth'
-folderres='./sim5A2000/azimuth'
+folderres=up.folderres+'azimuth'
 
 name=sys.argv[1]
 
@@ -256,12 +258,27 @@ plt.ylabel('$y$')
 plt.axis('equal')
 plt.savefig(folderres+'/vyteor.'+img,dpi=400)
 
+velmax=v1v[1,:].max()*0.9
+velmin=-velmax
+nlevel=20
+lev=np.linspace(velmin,velmax,nlevel)
+plt.figure(81)
+plt.scatter(x1v[0,:],x1v[1,:],c=vy_press,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.colorbar()
+plt.tricontour(x1v[0,:],x1v[1,:],vy_press,levels=lev, linewidths=0.5, colors='k')
+plt.title('$v_{y,teor}$')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.axis('equal')
+plt.savefig(folderres+'/vyteor_press.'+img,dpi=400)
+
+
 plt.figure(4)
 plt.scatter(xgrplan,ygrplan,c=vyplan,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 #plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 #plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
-plt.tricontour(xgrplan,ygrplan,vyplan,levels=20, linewidths=0.5, colors='k')
+plt.tricontour(xgrplan,ygrplan,vyplan,levels=lev, linewidths=0.5, colors='k')
 plt.title('$v_{y,sim}$')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -269,8 +286,8 @@ plt.axis('equal')
 plt.savefig(folderres+'/vysim.'+img,dpi=400)
 
 plt.figure(51)
-vmax=np.max(Ma/6.28)
-vmin=np.min(Ma/6.28)
+vmax=np.max(Ma/6.28)/2.5
+vmin=np.max(Ma/6.28)
 plt.scatter(xgrplan,ygrplan,c=SigmaEcc,vmin=vmin,vmax=vmax,cmap="inferno")
 plt.colorbar()
 plt.title('$\Sigma_{\\rm teor}(a,\phi)$')
@@ -355,6 +372,18 @@ plt.ylim([0,0.5])
 ax=plt.gca()
 #ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 plt.savefig(folderres+'/ea.'+img,dpi=400)
+
+plt.figure(65)
+plt.plot(radii,Ma,label='simulation')
+plt.plot(radii,Ma_a(radii),label='model')
+plt.xlabel('$a$')
+plt.ylabel('$M_a$')
+plt.xlim([2,13])
+plt.legend()
+ax=plt.gca()
+#ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+plt.savefig(folderres+'/Ma.'+img,dpi=400)
+
 
 #plt.draw()
 #plt.pause(1)

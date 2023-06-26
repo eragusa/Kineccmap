@@ -7,7 +7,10 @@ from scipy.signal import savgol_filter
 def interpolator(x,y,opt):
     option=opt #in case other variables need to be specified from the line
     #first filter with
-    y_filtered=savgol_filter(y,window_length=int(len(x)/7),polyorder=2)
+
+    #sistema come option che per sigma serve window stretta perche funzione e' molto steep
+
+    y_filtered=savgol_filter(y,window_length=int(len(x)/option),polyorder=2)
     #then interpolate
     interpolation_method = 'cubic'      
     interp = interp1d(x, y_filtered, kind=interpolation_method)

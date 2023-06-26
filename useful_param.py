@@ -1,8 +1,11 @@
 import numpy as np
 
+folderres='./analysis_paper/'
+#folderres='./sim5A2000/'
+img='png'
 #size of ellipses
 ain=2. #at the moment used as minimum radius beyond which strarting looking for the maximum density
-fracmax=0.2 #which percentage of density is used to define cavity edge
+fracmax=0.3 #which percentage of density is used to define cavity edge
 aout=10.
 a0=2.
 #eccentricity parameters
@@ -29,3 +32,5 @@ i0=0*50./180.*np.pi
 PA0=10./180.*np.pi
 #for channel maps
 nchannels=20
+####interpolation
+npol=3

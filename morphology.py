@@ -2,8 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pdb
 import discEccanalysis_pysplash as de
+import interpolation as itp
+import useful_param as up
 
-npol=20
+npol=up.npol
 
 def Jacobian_det(a,phi,e_f,sinvarpi_f,cosvarpi_f,deda_f,dvpda_f):
 
@@ -39,15 +41,15 @@ if __name__=='__main__':
     a=3.*np.ones(100)
     phi=np.linspace(0,np.pi*2.,100)
 
-    ee=np.polynomial.Chebyshev.fit(radprof,ecc,npol)
+    ee=itp.interpolator(radprof,ecc,npol)
     def e(a):
         return ee(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    sin_interp=np.polynomial.Chebyshev.fit(radprof,np.sin(varpi),npol*2)
+    sin_interp=itp.interpolator(radprof,np.sin(varpi),npol*2)
     def sinvarpi(a):
         return sin_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    cos_interp=np.polynomial.Chebyshev.fit(radprof,np.cos(varpi),npol*2)
+    cos_interp=itp.interpolator(radprof,np.cos(varpi),npol*2)
     def cosvarpi(a):
         return cos_interp(a)*(a<radprof[-int(frgrid*len(radprof))])
 
@@ -58,11 +60,11 @@ if __name__=='__main__':
     #then divide by same and take imaginary part
     dvarpida=np.imag(np.gradient(np.exp(1.j*vp),radprof)/np.exp(1.j*vp))
 
-    deeda=np.polynomial.Chebyshev.fit(radprof,deda,npol)
+    deeda=itp.interpolator(radprof,deda,6*npol)
     def deda_f(a):
         return deeda(a)*(a<radprof[-int(frgrid*len(radprof))])
 
-    dvpvpda=np.polynomial.Chebyshev.fit(radprof,dvarpida,2*npol)
+    dvpvpda=itp.interpolator(radprof,dvarpida,2*npol)
     def dvpda(a):
         return dvpvpda(a)*(a<radprof[-int(frgrid*len(radprof))])
 

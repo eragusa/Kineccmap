@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import eccentric_disc.VerticalStructure as evert
 from scipy.interpolate import RegularGridInterpolator
 import useful_param as up
+import interpolation as itp
 import pdb
 
 a0=up.ain #6. #be careful R_ref not always coincides with R_in
@@ -105,11 +106,11 @@ def vert_struct_solver(H0,e0):
     vz_arr=dh*H0*Omega0 #dharr/htarr*cs(amesh)   
 
     #need now to plot it as eccentric anom
-    interp_H = np.polynomial.Chebyshev.fit(Eanom_arr,H_arr,80)
+    interp_H = itp.interpolator(Eanom_arr,H_arr,80)
     def H_func(EE):
         return interp_H(EE)
 
-    interp_vz =np.polynomial.Chebyshev.fit(Eanom_arr,vz_arr,80)
+    interp_vz =itp.interpolator(Eanom_arr,vz_arr,80)
     def vz_func(EE):
         return interp_vz(EE)
 
