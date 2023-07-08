@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 frgrid=0.05
 res=de.loadHDF5('datasim.h5')
-index=100
+index=400
 ain=2.
 aout=6.
 na=20

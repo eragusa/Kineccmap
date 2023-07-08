@@ -43,6 +43,22 @@ M=up.M
 #Npol for interpolation
 npol=up.npol
 
+def plan2matr(quant,nx,ny,selection):
+    zeros=np.zeros([nx,ny])
+
+    #creating mask for sigma_sim plot to plot with pcolormesh
+    zerosplan=(1.*zeros).reshape(nx*ny)
+    #mask obtained leaving the matrix=0. where not selected and inverting to have inf in non-selected areas
+    zerosplan[selection]=1.
+    mask=(1/zerosplan).reshape(nx,ny)
+    #####
+
+    #creating sigma_teor matrix from plan array to plot with pcolormesh
+    quant_plan=(1.*zeros).reshape(nx*ny)
+    quant_plan[selection]=quant
+    quant_matr=quant_plan.reshape(nx,ny)
+    return quant_matr*mask
+
 def Omega0(a):
     return np.sqrt(G*M/a**3)
 
@@ -79,7 +95,10 @@ def vrvphi2vxvy(x,y,vr,vphi):
     return vx,vy
 
 def pressure_corrected_vphi(a,vphi,dPda1rhoa):
-    return np.sqrt(vphi**2+dPda1rhoa(a))
+#    return np.sqrt(vphi**2+dPda1rhoa(a))
+    vphi0=Omega0(a)*a
+    vphi_azim=vphi/vphi0
+    return np.sqrt(vphi0**2+dPda1rhoa(a))*vphi_azim
 
 def killLoky():
     #returns the default signal of kill, which is 15

@@ -61,8 +61,11 @@ def calculate_vertical_structure(x,y,ainp,e,cosvarpi,sinvarpi,sigma):
     dharr=np.array(dhlist).transpose()
     
     #obtain physically meaningful quantities H=ht*Hcirc, v_z=dh/ht*cs
+    #quantities are dimensionless in H.
     H_arr=Hcirc(amesh)*htarr
-    vz_arr=dharr*cs(amesh) #dharr/htarr*cs(amesh)   
+    vz_arr=dharr*cs(amesh)*np.sqrt(2/np.pi) #*z/H   #dharr/htarr*cs(amesh)  
+    #the 2/pi factor comes from the fact that the way the velocity is calculated 
+    #in the sim returns value at z=H*sqrt(2/pi) as Int[z*z/|z|^Gaussian=H*sqrt(2/pi)
 
     #pdb.set_trace()
     interp_H = RegularGridInterpolator((a_arr, Eanom_arr), H_arr.transpose(),bounds_error=False, fill_value=None)

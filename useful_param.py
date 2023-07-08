@@ -1,7 +1,8 @@
 import numpy as np
 
-folderres='./analysis_paper/'
+#folderres='./analysis_paper/'
 #folderres='./sim5A2000/'
+folderres='./sim2A500/'
 img='png'
 #size of ellipses
 ain=2. #at the moment used as minimum radius beyond which strarting looking for the maximum density
