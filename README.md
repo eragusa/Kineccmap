@@ -18,3 +18,5 @@ run generate_ellipses_xy.py --- similar to velofield2.py but using power-law for
 the parameters in the preamble of the file.
 
 run harmonic_solve.py solves an implementation of the equation for the vertical motion in the paper.
+
+run velo_vert_model.py name-of-dump --- produces a model with velocity, vertical structure, and inclines, and rescale it to obtain a precise mock model of the system

@@ -77,9 +77,11 @@ varpi=np.arctan2(sinvarpi(a),cosvarpi(a))
 eccentricity=e(a)
 
 vxcirc,vycirc,vmod=gv.vcircular(Rgr,thetagr)
+
 vyplan=vy.reshape(nx*ny)[selectxya]
 vxplan=vx.reshape(nx*ny)[selectxya]
 vycircplan=vycirc.reshape(nx*ny)[selectxya]
+vxcircplan=vxcirc.reshape(nx*ny)[selectxya]
 vmodplan=vmod.reshape(nx*ny)[selectxya]
 densityplan=density.reshape(nx*ny)[selectxya]
 
@@ -177,6 +179,65 @@ plt.title('$(v_{y,{\\rm sim}}-v_{y,{\\rm circ}})/v_{\\phi}$')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.savefig(folderres+'/Dvy_circ_vphi.'+img,dpi=400)
+
+plt.figure(221)
+#norm=velmax/0.9
+velmax=0.2#(vyplan-v1v[1,:]).max()*0.9
+velmin=-velmax
+#plt.scatter(xgrplan,ygrplan,c=(vyplan-vycircplan)/vphi,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+Dvx_vphi_matr=gv.plan2matr((vxplan-vxcircplan)/vphi,nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvx_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
+plt.colorbar()
+#plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
+#plt.tricontour(xgrplan,ygrplan,(vyplan-v1v[1,:])/vphi,levels=20, linewidths=0.5, colors='k')
+plt.title('$(v_{x,{\\rm sim}}-v_{x,{\\rm circ}})/v_{\\phi}$')
+#plt.axis('equal')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.savefig(folderres+'/Dvx_circ_vphi.'+img,dpi=400)
+
+plt.figure(222)
+#norm=velmax/0.9
+velmax=0.2#(vyplan-v1v[1,:]).max()*0.9
+velmin=-velmax
+#plt.scatter(xgrplan,ygrplan,c=(vyplan-vycircplan)/vphi,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+Dvx_matr=gv.plan2matr((vxplan-vxcircplan),nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvx_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
+plt.colorbar()
+#plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
+#plt.tricontour(xgrplan,ygrplan,(vyplan-v1v[1,:])/vphi,levels=20, linewidths=0.5, colors='k')
+plt.title('$(v_{x,{\\rm sim}}-v_{x,{\\rm circ}})/v_{\\phi}$')
+#plt.axis('equal')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.savefig(folderres+'/Dvx_circ.'+img,dpi=400)
+
+plt.figure(223)
+#norm=velmax/0.9
+velmax=0.2#(vyplan-v1v[1,:]).max()*0.9
+velmin=-velmax
+#plt.scatter(xgrplan,ygrplan,c=(vyplan-vy_press)/vphi,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.pcolormesh(x,y,vy,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+Dvx_press_vphi_matr=gv.plan2matr((vxplan-vx_press)/vphi,nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvx_press_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
+plt.colorbar()
+#plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
+#plt.tricontour(xgrplan,ygrplan,(vyplan-vy_press)/vphi,levels=20, linewidths=0.5, colors='k')
+plt.title('$(v_{x,{\\rm sim}}-v_{x,{\\rm press}})/v_{\\phi}$')
+#plt.axis('equal')
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.savefig(folderres+'/Dvx_press_vphi.'+img,dpi=400)
+
+
 
 plt.figure(23)
 #norm=velmax/0.9
@@ -298,10 +359,11 @@ plt.savefig(folderres+'/Dvphi_circ_vphi.'+img,dpi=400)
 #plt.title('$\\Sigma$')
 #plt.axis('equal')
 #
-velmax=v1v[1,:].max()*0.9
+velmax=-v1v[1,:].min()*0.9
 velmin=-velmax
-nlevel=20
-lev=np.linspace(velmin,velmax,nlevel)
+nlevel=11
+#lev=np.linspace(velmin*0.8,velmax*0.8,nlevel)
+lev=[-0.4,-0.3,-0.2,-0.1,0.,0.1,0.2,0.3,0.4]
 plt.figure(8)
 #plt.scatter(x1v[0,:],x1v[1,:],c=v1v[1,:],cmap="RdBu_r",vmin=velmin,vmax=velmax)
 vyteor_matr=gv.plan2matr(v1v[1,:],nx,ny,selectxya)
@@ -309,17 +371,14 @@ plt.pcolormesh(x,y,vyteor_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
-plt.tricontour(x1v[0,:],x1v[1,:],v1v[1,:],levels=lev, linewidths=0.5, colors='k')
+#plt.tricontour(x1v[0,:],x1v[1,:],v1v[1,:],levels=lev, linewidths=0.5, colors='k')
+plt.contour(x,y,vyteor_matr,levels=lev, linewidths=0.5, colors='k')
 plt.title('$v_{y,teor}$')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 #plt.axis('equal')
 plt.savefig(folderres+'/vyteor.'+img,dpi=400)
 
-velmax=v1v[1,:].max()*0.9
-velmin=-velmax
-nlevel=20
-lev=np.linspace(velmin,velmax,nlevel)
 plt.figure(81)
 #plt.scatter(x1v[0,:],x1v[1,:],c=vy_press,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 vyteor_press_matr=gv.plan2matr(vy_press,nx,ny,selectxya)
@@ -327,8 +386,9 @@ plt.pcolormesh(x,y,vyteor_press_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
-plt.tricontour(x1v[0,:],x1v[1,:],vy_press,levels=lev, linewidths=0.5, colors='k')
-plt.title('$v_{y,teor}$')
+#plt.tricontour(x1v[0,:],x1v[1,:],vy_press,levels=lev, linewidths=0.5, colors='k')
+plt.contour(x,y,vyteor_press_matr,levels=lev, linewidths=0.5, colors='k')
+plt.title('$v_{y,press}$')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 #plt.axis('equal')
@@ -344,7 +404,8 @@ plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
 #plt.contour(x,y,vy,levels=lev, linewidths=0.5, colors='k')
-plt.tricontour(xgrplan,ygrplan,vyplan,levels=lev, linewidths=0.5, colors='k')
+#plt.tricontour(xgrplan,ygrplan,vyplan,levels=lev, linewidths=0.5, colors='k')
+plt.contour(x,y,vysim_matr,levels=lev, linewidths=0.5, colors='k')
 plt.title('$v_{y,sim}$')
 plt.xlabel('$x$')
 plt.ylabel('$y$')

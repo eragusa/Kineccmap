@@ -92,10 +92,19 @@ H,vz=vs.calculate_vertical_structure(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma
  #   plt.figure(2)
  #   plt.plot(phi,vz[i])
 
+x_min=-11.
+x_max=11
+y_min=-11.
+y_max=11.
+
 plt.figure(1)
 zmax=H.max()*0.9
 zmin=0
-plt.scatter(xgrplan,ygrplan,c=H,cmap="inferno",vmin=zmin,vmax=zmax)
+#plt.scatter(xgrplan,ygrplan,c=H,cmap="inferno",vmin=zmin,vmax=zmax)
+H_matr=gv.plan2matr(H,nx,ny,selectxya)
+plt.pcolormesh(x,y,H_matr,cmap="inferno",vmin=zmin,vmax=zmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.title('$H_{\\rm teor}$')
 plt.savefig(folderres+'/Hteor.'+img,dpi=400)
@@ -103,7 +112,11 @@ plt.savefig(folderres+'/Hteor.'+img,dpi=400)
 plt.figure(12)
 zmax=(H/a).max()*0.9
 zmin=0
-plt.scatter(xgrplan,ygrplan,c=H/a,cmap="inferno",vmin=zmin,vmax=zmax)
+#plt.scatter(xgrplan,ygrplan,c=H/a,cmap="inferno",vmin=zmin,vmax=zmax)
+Ha_matr=gv.plan2matr(H/a,nx,ny,selectxya)
+plt.pcolormesh(x,y,Ha_matr,cmap="inferno",vmin=zmin,vmax=zmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -113,7 +126,11 @@ plt.savefig(folderres+'/HRteor.'+img,dpi=400)
 plt.figure(2)
 velmax=vz.max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=vz,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.scatter(xgrplan,ygrplan,c=vz,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+vz_matr=gv.plan2matr(vz,nx,ny,selectxya)
+plt.pcolormesh(x,y,vz_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -123,7 +140,11 @@ plt.savefig(folderres+'/vzteor.'+img,dpi=400)
 plt.figure(3)
 zmax=H.max()*0.9
 zmin=0
-plt.scatter(xgrplan,ygrplan,c=zplan,cmap="inferno",vmin=zmin,vmax=zmax)
+#plt.scatter(xgrplan,ygrplan,c=zplan,cmap="inferno",vmin=zmin,vmax=zmax)
+zsim_matr=gv.plan2matr(zplan,nx,ny,selectxya)
+plt.pcolormesh(x,y,zsim_matr,cmap="inferno",vmin=zmin,vmax=zmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -133,7 +154,11 @@ plt.savefig(folderres+'/Hsim.'+img,dpi=400)
 plt.figure(32)
 zmax=(H/a).max()*0.9
 zmin=0
-plt.scatter(xgrplan,ygrplan,c=zplan/a,cmap="inferno",vmin=zmin,vmax=zmax)
+#plt.scatter(xgrplan,ygrplan,c=zplan/a,cmap="inferno",vmin=zmin,vmax=zmax)
+zsima_matr=gv.plan2matr(zplan/a,nx,ny,selectxya)
+plt.pcolormesh(x,y,zsima_matr,cmap="inferno",vmin=zmin,vmax=zmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -143,7 +168,11 @@ plt.savefig(folderres+'/HRsim.'+img,dpi=400)
 plt.figure(4)
 velmax=vz.max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=vzplan,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.scatter(xgrplan,ygrplan,c=vzplan,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+vzsim_matr=gv.plan2matr(vzplan,nx,ny,selectxya)
+plt.pcolormesh(x,y,vzsim_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -153,7 +182,11 @@ plt.savefig(folderres+'/vzsim.'+img,dpi=400)
 plt.figure(5)
 zmax=1.#H.max()*0.9
 zmin=0
-plt.scatter(xgrplan,ygrplan,c=(zplan-H)/H,cmap="inferno",vmin=zmin,vmax=zmax)
+#plt.scatter(xgrplan,ygrplan,c=(zplan-H)/H,cmap="inferno",vmin=zmin,vmax=zmax)
+Dz_H_matr=gv.plan2matr((zplan-H)/H,nx,ny,selectxya)
+plt.pcolormesh(x,y,Dz_H_matr,cmap="inferno",vmin=0.,vmax=0.2)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -163,28 +196,36 @@ plt.savefig(folderres+'/DH_H.'+img,dpi=400)
 plt.figure(6)
 velmax=0.1#vz.max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vz),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+Dvz_vz_matr=gv.plan2matr((vzplan-vz)/np.abs(vz),nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvz_vz_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm teor}}|)/v_{\\phi}$')
-plt.savefig(folderres+'/Dvz_vphi.'+img,dpi=400)
+plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm teor}})/|v_{z}|$')
+plt.savefig(folderres+'/Dvz_vz.'+img,dpi=400)
 
-plt.figure(62)
-velmax=0.1#vz.max()*0.9
-velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vphi),cmap="RdBu_r")
-plt.colorbar()
-plt.xlabel('$x$')
-plt.ylabel('$y$')
-plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm teor}}|)/v_{\\phi}$')
-plt.savefig(folderres+'/Dvz_vphi_highcontrast.'+img,dpi=400)
-
+#plt.figure(62)
+#velmax=0.1#vz.max()*0.9
+#velmin=-velmax
+#plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vphi),cmap="RdBu_r")
+#plt.colorbar()
+#plt.xlabel('$x$')
+#plt.ylabel('$y$')
+#plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm teor}}|)/v_{\\phi}$')
+#plt.savefig(folderres+'/Dvz_vphi_highcontrast.'+img,dpi=400)
+#
 
 plt.figure(7)
-velmax=0.05#vz.max()*0.9
+velmax=0.035#vz.max()*0.9
 velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=vz/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.scatter(xgrplan,ygrplan,c=vz/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+Dvz_vphi_matr=gv.plan2matr((vz)/np.abs(vphi),nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvz_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -192,9 +233,11 @@ plt.title('$v_{z,{\\rm teor}}/v_{\\phi}$')
 plt.savefig(folderres+'/vzteor_vphi.'+img,dpi=400)
 
 plt.figure(72)
-velmax=0.05#vz.max()*0.9
-velmin=-velmax
-plt.scatter(xgrplan,ygrplan,c=(vzplan)/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.scatter(xgrplan,ygrplan,c=(vzplan)/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
+Dvzsim_vz_matr=gv.plan2matr((vzplan)/np.abs(vphi),nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvzsim_vz_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')

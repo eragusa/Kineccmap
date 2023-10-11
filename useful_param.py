@@ -9,6 +9,7 @@ ain=2. #at the moment used as minimum radius beyond which strarting looking for 
 fracmax=0.3 #which percentage of density is used to define cavity edge
 aout=10.
 a0=2.
+abin=1.
 #eccentricity parameters
 e0=0.27
 qecc=0.5
@@ -29,8 +30,8 @@ qsigma=0.5
 G=1.#30.**2 #this gives velocity in km/s:  30km/s at R=1 around a M=1 star
 M=1.
 #orienting your disc in space
-i0=0*50./180.*np.pi
-PA0=10./180.*np.pi
+i0=-30./180.*np.pi
+PA0=0./180.*np.pi
 #for channel maps
 nchannels=20
 ####interpolation

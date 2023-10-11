@@ -19,7 +19,12 @@ frgrid=0.05
 
 #eccentricity parameters
 e0=up.e0
+varpi=up.varpi0
 qecc=up.qecc
+psigma=up.qsigma
+qcs=0.5-up.flaring
+a0=up.a0
+abin=up.abin
 #vertical properties
 #hor=0.0
 #hormin=0.1*hor #sets the values between which hor oscillate
@@ -66,7 +71,38 @@ def Omega_orb(a,phi,e,varpi):
     return Omega0(a)*(1.+e*np.cos(phi-varpi))**2/(1-e**2)**1.5
 
 def vcircular(R,theta):
-    return np.sqrt(G*M/R)*np.sin(theta),np.sqrt(G*M/R)*np.cos(theta),np.sqrt(G*M/R)
+    return -np.sqrt(G*M/R)*np.sin(theta),np.sqrt(G*M/R)*np.cos(theta),np.sqrt(G*M/R)
+
+def ecc_prof(a):
+    cs0=cs(a0)
+    Om=0.0001
+    gamma=1.
+    tildeOm=2./gamma*(Omega0(abin)*abin/cs0)**2*Om/Omega0(abin)
+    b1=qcs
+    b2=psigma
+#    c1=4.*np.sqrt(tildeOm)/(1+2*b1)
+ #   c2=1./4.*(1.+2.*b1)
+    c2=1
+    lfac=1.#lengthscale of exp decay
+    l0=2.
+    c1=(1/l0)**c2
+    c3=1
+#    c3=1./8.*(9.-2*b1-4.*b2)
+#    x=a/abin
+    x=a/(lfac*a0)
+
+   # pdb.set_trace()
+    e0mod=e0*np.exp(1)# so that at rad l0 is e=e0
+ #   return e0mod*np.exp(-c1*x**c2)/x**c3
+    return e0mod*np.exp(-x**c2)/x**c3
+
+def sigma_prof(a):
+    p=psigma
+    sigma0=0.001
+    return sigma0*(a/a0)**(-p)
+
+def phase_prof(a):
+    return varpi*(a/a)
 
 def makeadvancementbar(i,Np=1.E6):
     if(i==0):
@@ -130,6 +166,10 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
         radIn=radprof[wheremax[0]] 
         ain=radIn #take the inner edge of the cavity
         #ain=up.ain #take value from paramfile
+    else:
+        index,radxxx=de.matchtime(radprof,np.array([ain])) #here used to match the value for ain
+        wheremax=index
+        
     if aout==0: #define aout if not passed as argument as fraction of the outer grid radius
         aout=radprof[-1]*0.7
 
@@ -239,7 +279,7 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
 
     #NB: this function takes as input np.arrays, if you want to pass single values
     #use e.g. xy2aphi(np.array([1]),np.array([np.pi]).
-    def xy2aphi(x,y,selection,Rguess=5.,nproc=nprocs):
+    def xy2aphi(x,y,selection,Rguess=aout/2.,nproc=nprocs):
         R=np.sqrt(x**2+y**2)
         phi=np.mod(np.arctan2(y,x),2*np.pi)
         asol=np.zeros(len(R))
