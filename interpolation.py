@@ -36,7 +36,7 @@ def interpolator_2D_nonregular_togrid(x,y,z,xnew,ynew):
     x_sorted = x[sorted_indices]
     y_sorted = y[sorted_indices]
     z_sorted = z[sorted_indices]
-    interp_f_unstruct=griddata((x_sorted, y_sorted), z_sorted, (xnew, ynew), method='linear')
+    interp_f_unstruct=griddata((x_sorted, y_sorted), z_sorted, (xnew, ynew), method='cubic',fill_value=np.nan)
     return interp_f_unstruct
 
 def interpolator_2D_spline(x,y,z):

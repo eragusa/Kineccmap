@@ -12,7 +12,7 @@ import interpolation as itp
 
 img=up.img
 #folderres='./analysis_paper'
-folderres=up.folderres
+folderres=up.folderres+'mcfost_RT/0deg/'
 name=sys.argv[1]
 i0=0./180*np.pi#up.i0
 PA0=up.PA0
@@ -140,22 +140,47 @@ x0=xgrplan*1. #*1. to make a copy of xgrplan
 y0=ygrplan*1.
 z0=H*1.
 
-corrector=3.5#corrector for matching the last emission surface in units of H
+corrector=1.#3.5#corrector for matching the last emission surface in units of H
+corrector2=corrector
+
+#generate real height from radtransf of the faceon case
+file_path = './MCFOST/RT2A500/i_0_deg/interpolate_H_0.pkl'
+
+# Open the file in binary read mode and load the function using pickle
+with open(file_path, 'rb') as file:
+    func_H = pickle.load(file)
+
+H_RT=func_H((x0*rescale_x,y0*rescale_x))#the interpolate is already with rescaled x,y
+
 
 #Create arrays for applying rotations and mirror the disc also on the negativ z-axis
-xv=np.array([x0,y0,z0*corrector])*rescale_x
-xvbottom=np.array([x0,y0,-z0*corrector])*rescale_x
-vv=np.array([v0v[0,:],v0v[1,:],vz*corrector])*rescale_v
-vvbottom=np.array([v0v[0,:],v0v[1,:],vz*corrector])*rescale_v
+#xv=np.array([x0,y0,z0*corrector2])*rescale_x
+#xvbottom=np.array([x0,y0,-z0*corrector2])*rescale_x
+xv=np.array([x0,y0,H_RT*corrector2])*rescale_x
+xvbottom=np.array([x0,y0,-H_RT*corrector2])*rescale_x
+#vv=np.array([v0v[0,:],v0v[1,:],vz*corrector])*rescale_v
+#vvbottom=np.array([v0v[0,:],v0v[1,:],-vz*corrector])*rescale_v
+
+#accounting for vertical profile extracted from RT
+#vv=np.array([v0v[0,:],v0v[1,:],np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+#vvbottom=np.array([v0v[0,:],v0v[1,:],np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+
+#accounting for vertical profile extracted from RT + z**2+R**2 correction
+rescale_v2=np.sqrt(Rplan)*(Rplan/(Rplan**2+H_RT**2)**(3./4.))
+vv=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+vvbottom=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+
+
 
 #eccentric models with no vertical height and velocity
 vvz0=np.array([v0v[0,:],v0v[1,:],0.*v0v[0,:]])*rescale_v
 
 
 #xcirc
+correctorcirc=3.
 zcirc=vs.Hcirc(np.sqrt(x0**2+y0**2))
-xvcirc=np.array([x0,y0,zcirc*corrector])*rescale_x
-xvcircbottom=np.array([x0,y0,-zcirc*corrector])*rescale_x
+xvcirc=np.array([x0,y0,zcirc*correctorcirc])*rescale_x
+xvcircbottom=np.array([x0,y0,-zcirc*correctorcirc])*rescale_x
 xvcirc0=np.array([x0,y0,0.*x0])*rescale_x #no vertical displacement
 
 #vcirc
@@ -163,20 +188,24 @@ vycircplan=vycirc.reshape(nx*ny)[selectxya]
 vxcircplan=vxcirc.reshape(nx*ny)[selectxya]
 vcircv=np.array([vxcircplan,vycircplan,0.*vxcircplan])*rescale_v
 
-xvsim=np.array([xgrplan,ygrplan,zplan*corrector])*rescale_x
-xvsimbottom=np.array([xgrplan,ygrplan,-zplan*corrector])*rescale_x
-vvsim=np.array([vxplan,vyplan,vzplan*corrector])*rescale_v
-vvsimbottom=np.array([vxplan,vyplan,-vzplan*corrector])*rescale_v
+#xvsim=np.array([xgrplan,ygrplan,zplan*corrector2])*rescale_x
+#xvsimbottom=np.array([xgrplan,ygrplan,-zplan*corrector2])*rescale_x
+#vvsim=np.array([vxplan,vyplan,vzplan*corrector])*rescale_v
+#vvsimbottom=np.array([vxplan,vyplan,-vzplan*corrector])*rescale_v
+xvsim=np.array([xgrplan,ygrplan,zplan*corrector2])*rescale_x
+xvsimbottom=np.array([xgrplan,ygrplan,-zplan*corrector2])*rescale_x
+#the 0.8 to account for factor sqrt(2/pi)
+vvsim=np.array([vxplan,vyplan,np.nan_to_num(vzplan*corrector*H_RT/(0.79*z0),posinf=0.,neginf=0.)])*rescale_v
+vvsimbottom=np.array([vxplan,vyplan,np.nan_to_num(-vzplan*corrector*H_RT/(0.79*z0),posinf=0.,neginf=0.)])*rescale_v
 
 #pressure corrected velocities
 vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v0v[0,:],v0v[1,:])
 vphi_press=gv.pressure_corrected_vphi(a,vphi,dPda1rhoa_a)
 vx_press,vy_press=gv.vrvphi2vxvy(xgrplan,ygrplan,vr,vphi_press)
 
-vvpress=np.array([vx_press,vy_press,vz*corrector])*rescale_v
-vvpressbottom=np.array([vx_press,vy_press,vz*corrector])*rescale_v
-
-
+#the 0.8 to account for factor sqrt(2/pi)
+vvpress=np.array([vx_press,vy_press,np.nan_to_num(vz*corrector*H_RT/(z0),posinf=0.,neginf=0.)])*rescale_v
+vvpressbottom=np.array([vx_press,vy_press,np.nan_to_num(-vz*corrector*H_RT/(z0),posinf=0.,neginf=0.)])*rescale_v
 
 #Rotate positions for inclination and PA
 x01v=rot_x(xv,i0)
@@ -220,7 +249,7 @@ v1vsimbottom=rot_x(vvsimbottom,i0)
 
 velmax=0.3
 velmin=-velmax
-lev=np.linspace(-velmax,velmax,19)
+lev=[-0.2,-0.1,0.,0.1,0.2]#np.linspace(-velmax,velmax,19)
 
 extent = aout*rescale_x #fits.open(filename)[0].header['CDELT2'] * 1024 * 3600
 
@@ -298,9 +327,9 @@ plt.ylim([-extent,extent])
 velmax=0.5
 velmin=-velmax
 plt.figure(7)
-plt.scatter(x1v[0,:],x1v[1,:],c=(-0.8*v1vpress[2,:]+v1vsim[2,:])*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+plt.scatter(x1v[0,:],x1v[1,:],c=(-v1vpress[2,:]+v1vsim[2,:])*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
-plt.tricontour(x1v[0,:],x1v[1,:],(-0.8*v1vpress[2,:]+v1vsim[2,:])*matchsign,levels=lev, linewidths=0.5, colors='k')
+plt.tricontour(x1v[0,:],x1v[1,:],(-v1vpress[2,:]+v1vsim[2,:])*matchsign,levels=lev, linewidths=0.5, colors='k')
 plt.axis('equal')
 plt.xlim([-extent,extent])
 plt.ylim([-extent,extent])
@@ -341,16 +370,19 @@ plt.figure(11)
 plt.pcolormesh(xnew,ynew,residuals,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
 plt.contour(xnew,ynew,residuals,levels=lev,linewidths=0.5,colors='k')
+plt.savefig(folderres+'res_RT_vpress.'+img)
 
 plt.figure(22)
 plt.pcolormesh(xnew,ynew,vzpress_interpgrid,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
 plt.contour(xnew,ynew,vzpress_interpgrid,levels=lev,linewidths=0.5,colors='k')
+plt.savefig(folderres+'vpress_0.'+img)
 
 plt.figure(33)
 plt.pcolormesh(xnew,ynew,func_RT((xnew_grid,ynew_grid)),cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
 plt.contour(xnew,ynew,func_RT((xnew_grid,ynew_grid)),levels=lev,linewidths=0.5,colors='k')
+plt.savefig(folderres+'RT_0.'+img)
 
 #plt.figure(44)
 #plt.pcolormesh(xnew,ynew,residuals_circ,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
@@ -376,6 +408,7 @@ plt.figure(88)
 plt.pcolormesh(xnew,ynew,residuals_simmodel,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
 plt.contour(xnew,ynew,residuals_simmodel,levels=lev,linewidths=0.5,colors='k')
+plt.savefig(folderres+'res_sim_vpress.'+img)
 
 
 

@@ -12,9 +12,9 @@ import interpolation as itp
 
 img=up.img
 #folderres='./analysis_paper'
-folderres=up.folderres
+folderres=up.folderres+'mcfost_RT/30deg/'
 name=sys.argv[1]
-i0=-31/180*np.pi#up.i0
+i0=-30/180*np.pi#up.i0
 PA0=up.PA0
 aout=up.aout
 
@@ -155,12 +155,21 @@ H_RT=func_H((x0*rescale_x,y0*rescale_x))#the interpolate is already with rescale
 #Create arrays for applying rotations and mirror the disc also on the negativ z-axis
 #xv=np.array([x0,y0,z0*corrector2])*rescale_x
 #xvbottom=np.array([x0,y0,-z0*corrector2])*rescale_x
-xv=np.array([x0,y0,H_RT*corrector2])*rescale_x
-xvbottom=np.array([x0,y0,-H_RT*corrector2])*rescale_x
+xv=np.array([x0,y0,H_RT])*rescale_x
+xvbottom=np.array([x0,y0,-H_RT])*rescale_x
 #vv=np.array([v0v[0,:],v0v[1,:],vz*corrector])*rescale_v
 #vvbottom=np.array([v0v[0,:],v0v[1,:],-vz*corrector])*rescale_v
-vv=np.array([v0v[0,:],v0v[1,:],np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
-vvbottom=np.array([v0v[0,:],v0v[1,:],np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+
+#accounting for vertical profile extracted from RT
+#vv=np.array([v0v[0,:],v0v[1,:],np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+#vvbottom=np.array([v0v[0,:],v0v[1,:],np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+
+#accounting for vertical profile extracted from RT + z**2+R**2 correction
+rescale_v2=1.#*np.sqrt(Rplan)*(Rplan/(Rplan**2+H_RT**2)**(3./4.))
+vv=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(vz*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+vvbottom=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(-vz*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+
+
 
 #eccentric models with no vertical height and velocity
 vvz0=np.array([v0v[0,:],v0v[1,:],0.*v0v[0,:]])*rescale_v
@@ -194,8 +203,8 @@ vx_press,vy_press=gv.vrvphi2vxvy(xgrplan,ygrplan,vr,vphi_press)
 
 #vvpress=np.array([vx_press,vy_press,vz*corrector])*rescale_v
 #vvpressbottom=np.array([vx_press,vy_press,vz*corrector])*rescale_v
-vvpress=np.array([vx_press,vy_press,np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
-vvpressbottom=np.array([vx_press,vy_press,np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+vvpress=np.array([vx_press*rescale_v2,vy_press*rescale_v2,np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+vvpressbottom=np.array([vx_press*rescale_v2,vy_press*rescale_v2,np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
 
 
 
@@ -247,7 +256,7 @@ lev=np.linspace(-velmax,velmax,19)
 extent = aout*rescale_x #fits.open(filename)[0].header['CDELT2'] * 1024 * 3600
 
 
-matchsign=-1. #to match the sign convention in observations
+matchsign=-1. # -1 to match the sign convention in observations
 
 #Watch the system as if it was originally created face-on (line of sight is z-axis)
 #velmax=v1v[2,:].max()*1.3
@@ -292,9 +301,10 @@ fig = plt.figure(4)
 ax = fig.add_subplot(projection='3d')
 ax.scatter(x1v[0,:],x1v[1,:],x1v[2,:],c=v1v[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 ax.scatter(x1vbottom[0,:],x1vbottom[1,:],x1vbottom[2,:],c=v1vbottom[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velmax)
-ax.set_xlim([xmin,xmax])
-ax.set_ylim([ymin,ymax])
-ax.set_zlim([zmin,zmax])
+ax.set_xlim([-extent,extent])
+ax.set_ylim([-extent,extent])
+ax.set_zlim([-extent,extent])
+plt.savefig(folderres+'vpress_3D.'+img)
 
 #watch the system from the face-on pov
 plt.figure(5)
@@ -302,7 +312,7 @@ velomax=0.3
 velmin=-velomax
 
 plt.scatter(xv[0,:],xv[1,:],c=vv[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velomax)
-plt.scatter(xvbottom[0,:],xvbottom[1,:],c=vvbottom[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velomax)
+#plt.scatter(xvbottom[0,:],xvbottom[1,:],c=vvbottom[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velomax)
 plt.colorbar()
 plt.axis('equal')
 plt.xlim([-extent,extent])
@@ -364,7 +374,10 @@ Hinterp=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],xv[2,:]/rescale_
 H_RT2=func_H2((xnew_grid,ynew_grid))
 
 vzpress_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign,xnew_grid,ynew_grid)
-vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc[0,:],x1vcirc[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
+#vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc[0,:],x1vcirc[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
+#note that for vcirc one needs the correct scale height, which we do not have in x1vcircv, so we use same coordinates as 
+#eccentric case for a fair comparison. Residuals from this case are how they would look like in ExoAlma, state of the art.
+vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
 vcirc0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0[1,:],
                                                         v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
 vzpress0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0[1,:],
@@ -378,15 +391,19 @@ residuals_circ0=func_RT((xnew_grid,ynew_grid))-vcirc0_interpgrid
 residuals_press0=func_RT((xnew_grid,ynew_grid))-vzpress0_interpgrid
 residuals_sim=func_RT((xnew_grid,ynew_grid))-vsim_interpgrid
 residuals_simmodel=vsim_interpgrid-vzpress_interpgrid
+residuals_simcirc=vsim_interpgrid-vcirc_interpgrid
+residuals_simcirc0=vsim_interpgrid-vcirc0_interpgrid
+
 
 velomax=0.3
-lev=[-0.1,0,0.1]
+lev2=[-0.1,0,0.1]
 
 plt.figure(11)
 plt.pcolormesh(xnew,ynew,residuals,cmap='RdBu_r',vmin=-0.4,vmax=0.4)
 plt.colorbar()
-plt.contour(xnew,ynew,residuals,levels=lev,linewidths=0.5,colors='k')
+plt.contour(xnew,ynew,residuals,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
+plt.savefig(folderres+'res_RT_vpress.'+img)
 
 plt.figure(22)
 plt.pcolormesh(xnew,ynew,vzpress_interpgrid,cmap='RdBu_r',vmin=-velmax,vmax=velmax)
@@ -399,6 +416,7 @@ plt.pcolormesh(xnew,ynew,func_RT((xnew_grid,ynew_grid)),cmap='RdBu_r',vmin=-velm
 plt.colorbar()
 plt.contour(xnew,ynew,func_RT((xnew_grid,ynew_grid)),levels=lev,linewidths=0.5,colors='k')
 plt.axis('equal')
+plt.savefig(folderres+'RT_30.'+img)
 
 plt.figure(44)
 plt.pcolormesh(xnew,ynew,vsim_interpgrid,cmap='RdBu_r',vmin=-velmax,vmax=velmax)
@@ -414,26 +432,44 @@ plt.axis('equal')
 plt.figure(55)
 plt.pcolormesh(xnew,ynew,residuals_sim,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
-plt.contour(xnew,ynew,residuals_sim,levels=lev,linewidths=0.5,colors='k')
+plt.contour(xnew,ynew,residuals_sim,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
 
 plt.figure(66)
-plt.pcolormesh(xnew,ynew,residuals_circ0,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
+plt.pcolormesh(xnew,ynew,residuals_circ,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
-plt.contour(xnew,ynew,residuals_circ0,levels=lev,linewidths=0.5,colors='k')
+plt.contour(xnew,ynew,residuals_circ,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
+plt.savefig(folderres+'res_RT_vcirc.'+img)
 
 plt.figure(77)
 plt.pcolormesh(xnew,ynew,residuals_press0,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
-plt.contour(xnew,ynew,residuals_press0,levels=lev,linewidths=0.5,colors='k')
+plt.contour(xnew,ynew,residuals_press0,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
+plt.savefig(folderres+'res_RT_vpress0.'+img)
 
 plt.figure(88)
 plt.pcolormesh(xnew,ynew,residuals_simmodel,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
-plt.contour(xnew,ynew,residuals_simmodel,levels=lev,linewidths=0.5,colors='k')
+plt.contour(xnew,ynew,residuals_simmodel,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
+plt.savefig(folderres+'res_sim_vpress.'+img)
+
+plt.figure(99)
+plt.pcolormesh(xnew,ynew,residuals_simcirc,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
+plt.colorbar()
+plt.contour(xnew,ynew,residuals_simcirc,levels=lev2,linewidths=0.5,colors='k')
+plt.axis('equal')
+plt.savefig(folderres+'res_sim_vcirc.'+img)
+
+plt.figure(100)
+plt.pcolormesh(xnew,ynew,residuals_circ0,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
+plt.colorbar()
+plt.contour(xnew,ynew,residuals_circ0,levels=lev2,linewidths=0.5,colors='k')
+plt.axis('equal')
+plt.savefig(folderres+'res_RT_vcirc0.'+img)
+
 
 def sumres(x):
     xx=x.reshape(nx*ny)[selectxya]

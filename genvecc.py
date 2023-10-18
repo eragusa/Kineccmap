@@ -173,6 +173,8 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     if aout==0: #define aout if not passed as argument as fraction of the outer grid radius
         aout=radprof[-1]*0.7
 
+    print("Taking ain=",ain)
+
     emax=ecc[wheremax[0]]
     eout=np.mean(ecc[-20:])
     #grid properties
