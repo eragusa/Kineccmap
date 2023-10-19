@@ -147,7 +147,7 @@ def killLoky():
     print("Killing stray LokyProcesses from parallelisation: ",success)
     return
 
-def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=10,aout=0.,ain=0.):#,simfield):
+def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=10,aout=0.,ain=0.,ret_full_a=False):#,simfield):
     sigma=sigmainp
     Ma=Mainp
     ecc=eccinp
@@ -309,7 +309,10 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
                         asoli=-1
 
             else:
-                asoli=-1
+                if(R[i]/(aout-ain)<0.5):
+                    asoli=-1
+                else:
+                    asoli=np.inf
             return asoli
 #        pdb.set_trace()
         with Parallel(n_jobs=multiprocessing.cpu_count()) as parallel:
@@ -370,4 +373,8 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     v1v=vv#rot_x(vv,i0)
 #    v1vbottom=rot_x(vvbottom,i0)
 
-    return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda_f,dvpda_f,sigma_a,Ma_a,dPda1rhoa_a
+    if (not ret_full_a):
+        return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda_f,dvpda_f,sigma_a,Ma_a,dPda1rhoa_a
+    else:
+        return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda_f,dvpda_f,sigma_a,Ma_a,dPda1rhoa_a,aprov
+ 
