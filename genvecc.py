@@ -48,6 +48,48 @@ M=up.M
 #Npol for interpolation
 npol=up.npol
 
+def include_excluded_velocity(v,xgr,ygr,a_full,ain,aout):
+    nx=xgr.shape[0]
+    ny=xgr.shape[1]
+    xgrplan=xgr.reshape(nx*ny)
+    ygrplan=ygr.reshape(nx*ny)
+
+    vmatr=np.zeros([nx,ny])
+    vplan=vmatr.reshape(nx*ny)
+
+    #selection in the disc
+    selxya=(a_full>ain)*(a_full<aout)
+    vplan[selxya]=v
+    #outer disc
+    selout=(a_full>aout)
+    vplan[selout]=np.nan
+    #inner disc
+    selin=(a_full<ain)
+    vplan[selin]=0.0
+
+    return vplan[a_full<aout]
+    
+def include_excluded_z(z,xgr,ygr,a_full,ain,aout):
+    nx=xgr.shape[0]
+    ny=xgr.shape[1]
+    xgrplan=xgr.reshape(nx*ny)
+    ygrplan=ygr.reshape(nx*ny)
+
+    zmatr=np.zeros([nx,ny])
+    zplan=zmatr.reshape(nx*ny)
+
+    #selection in the disc
+    selxya=(a_full>ain)*(a_full<aout)
+    zplan[selxya]=z
+    #outer disc
+    selout=(a_full>aout)
+    zplan[selout]=0.
+    #inner disc
+    selin=(a_full<ain)
+    zplan[selin]=0.
+
+    return zplan[a_full<aout]
+ 
 def plan2matr(quant,nx,ny,selection):
     zeros=np.zeros([nx,ny])
 
@@ -376,5 +418,5 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
     if (not ret_full_a):
         return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda_f,dvpda_f,sigma_a,Ma_a,dPda1rhoa_a
     else:
-        return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda_f,dvpda_f,sigma_a,Ma_a,dPda1rhoa_a,aprov
+        return x1v,v1v,selectxya,a,e,cosvarpi,sinvarpi,deda_f,dvpda_f,sigma_a,Ma_a,dPda1rhoa_a,aprov,ain,aout
  

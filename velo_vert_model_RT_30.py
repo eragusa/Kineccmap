@@ -44,7 +44,7 @@ density=np.loadtxt(name+'_columndensity_proj.pix')
 vx=np.loadtxt(name+'_vx_proj.pix')
 vy=np.loadtxt(name+'_vy_proj.pix')
 z=np.sqrt(np.loadtxt(name+'_z2_proj.pix'))
-vz=np.loadtxt(name+'_vz1_proj.pix')
+vzsim=np.loadtxt(name+'_vz1_proj.pix')
 #vz=-vz #for consistency with sign convention in observations
 
 #vz=np.sqrt(np.loadtxt(name+'_vz2_proj.pix'))#-vzm**2)
@@ -95,53 +95,100 @@ sigma=res['sigmaA'][index[0],:]
 wheremax=np.nonzero(sigma==np.max(sigma))
 
 #phase=np.ones(len(ecc))*phase[wheremax[0]]
-x0v,v0v,selectxya,a,e,cosvarpi,sinvarpi,deda,dvpda,sigma_a,Ma_a,dPda1rhoa_a=gv.generate_velocity_map(x,y,ecc,phase,sigma,Ma,radii,nprocs=20,aout=10.)
+#####################################################
+##### Calculating velocities and other profiles #####
+#####################################################
+x0v,v0v,selectxya,a,e,cosvarpi,sinvarpi,deda,dvpda,sigma_a,Ma_a,dPda1rhoa_a,a_full,ain,aout=\
+                                                    gv.generate_velocity_map(x,y,ecc,phase,sigma,\
+                                                                              Ma,radii,nprocs=20,aout=10.,ret_full_a=True)
 
-Rgr=np.sqrt(xgr**2+ygr**2)
-thetagr=np.arctan2(ygr,xgr)
-#defining value of varpi and e for all cells
+
+#defining value of varpi and e for all selected pixels
 varpi=np.arctan2(sinvarpi(a),cosvarpi(a))
 eccentricity=e(a)
 
-vxcirc,vycirc,vmod=gv.vcircular(Rgr,thetagr)
+#define grid coordinates
+Rgr=np.sqrt(xgr**2+ygr**2)
+thetagr=np.arctan2(ygr,xgr)
 
-Rplan=Rgr.reshape(nx*ny)[selectxya]
-vyplan=vy.reshape(nx*ny)[selectxya]
-vxplan=vx.reshape(nx*ny)[selectxya]
-vzplan=vz.reshape(nx*ny)[selectxya]
-zplan=z.reshape(nx*ny)[selectxya]
-densityplan=density.reshape(nx*ny)[selectxya]
+#taking coordinates of the selection and making the plane vectors, we will revert the selection later
 xgrplan=xgr.reshape(nx*ny)[selectxya]
 ygrplan=ygr.reshape(nx*ny)[selectxya]
-vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v0v[0,:],v0v[1,:])
-vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
-#calculate H and vz teor
+Rplan=Rgr.reshape(nx*ny)[selectxya]
+thetaplan=thetagr.reshape(nx*ny)[selectxya]
+
+#reshaping and selecting z from simulation
+zplan=z.reshape(nx*ny)[selectxya]
+
+############################################
+#####Calculating the vertical structure#####
+############################################
 H,vz=vs.calculate_vertical_structure(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma)
-#vz=-vz #for consistency with sign convention
 
-#phi=np.linspace(0,6.28,len(H[0]))
-#for i in range(len(H)):
-#    plt.figure(1)
- #   plt.plot(phi,H[i])
- #   plt.figure(2)
- #   plt.plot(phi,vz[i])
+######### Adding other model velocities #############
 
-xmin=xmin*rescale_x
-ymin=ymin*rescale_x
-zmin=zmin*rescale_x
+#vr vphi of the model
+vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v0v[0,:],v0v[1,:])
 
-xmax=xmax*rescale_x
-ymax=ymax*rescale_x
-zmax=zmax*rescale_x
+#Calculating circular velocities for the model
+vxcircplan,vycircplan,vmod=gv.vcircular(Rplan,thetaplan)
 
-plt.figure(1)
+#pressure corrected velocities
+vphi_press=gv.pressure_corrected_vphi(a,vphi,dPda1rhoa_a)
+vx_press,vy_press=gv.vrvphi2vxvy(xgrplan,ygrplan,vr,vphi_press)
 
-x0=xgrplan*1. #*1. to make a copy of xgrplan
-y0=ygrplan*1.
-z0=H*1.
+#transforming simulation coordinates to match the selected pixels, we will revert this later
+vyplan=vy.reshape(nx*ny)[selectxya]
+vxplan=vx.reshape(nx*ny)[selectxya]
+vzplan=vzsim.reshape(nx*ny)[selectxya]
+vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
 
-corrector=1.#2.3#corrector for matching the last emission surface in units of H
-corrector2=1.
+#####################################################################################
+#####   We revert the selection including also excluded region for velocities   #####
+#####   this is achieved attributing v=0 in the cavity, v=nan outside.          #####
+#####   mainly for plotting properly the cavity area when interpolating         #####
+#####################################################################################
+
+#reverting the selection to the full disc model
+x0=xgr.reshape(nx*ny)[a_full<aout] #*1. to make a copy of xgrplan
+y0=ygr.reshape(nx*ny)[a_full<aout] 
+z0=gv.include_excluded_z(H,xgr,ygr,a_full,ain,aout)
+
+#sim
+xgrplan=x0
+ygrplan=y0
+zplan=gv.include_excluded_z(zplan,xgr,ygr,a_full,ain,aout)
+Rplan=Rgr.reshape(nx*ny)[a_full<aout] 
+thetaplan=thetagr.reshape(nx*ny)[a_full<aout] 
+
+
+#velocities model
+vr=gv.include_excluded_velocity(vr,xgr,ygr,a_full,ain,aout)
+vphi=gv.include_excluded_velocity(vphi,xgr,ygr,a_full,ain,aout)
+vx0=gv.include_excluded_velocity(v0v[0,:],xgr,ygr,a_full,ain,aout)
+vy0=gv.include_excluded_velocity(v0v[1,:],xgr,ygr,a_full,ain,aout)
+vz=gv.include_excluded_velocity(vz,xgr,ygr,a_full,ain,aout)
+
+v0v=np.array([vx0,vy0,vz])
+
+#vcirc
+vxcircplan=gv.include_excluded_velocity(vxcircplan,xgr,ygr,a_full,ain,aout)
+vycircplan=gv.include_excluded_velocity(vycircplan,xgr,ygr,a_full,ain,aout)
+
+#v_press
+vx_press=gv.include_excluded_velocity(vx_press,xgr,ygr,a_full,ain,aout)
+vy_press=gv.include_excluded_velocity(vy_press,xgr,ygr,a_full,ain,aout)
+
+#vsim
+vrsim=gv.include_excluded_velocity(vrsim,xgr,ygr,a_full,ain,aout)
+vphisim=gv.include_excluded_velocity(vphisim,xgr,ygr,a_full,ain,aout)
+vxplan=gv.include_excluded_velocity(vxplan,xgr,ygr,a_full,ain,aout)
+vyplan=gv.include_excluded_velocity(vyplan,xgr,ygr,a_full,ain,aout)
+vzplan=gv.include_excluded_velocity(vzplan,xgr,ygr,a_full,ain,aout)
+
+
+corrector=1.#3.5#corrector for matching the last emission surface in units of H
+corrector2=corrector
 
 #generate real height from radtransf of the faceon case
 file_path = './MCFOST/RT2A500/i_0_deg/interpolate_H_0.pkl'
@@ -152,11 +199,12 @@ with open(file_path, 'rb') as file:
 
 H_RT=func_H((x0*rescale_x,y0*rescale_x))#the interpolate is already with rescaled x,y
 
+
 #Create arrays for applying rotations and mirror the disc also on the negativ z-axis
 #xv=np.array([x0,y0,z0*corrector2])*rescale_x
 #xvbottom=np.array([x0,y0,-z0*corrector2])*rescale_x
-xv=np.array([x0,y0,H_RT])*rescale_x
-xvbottom=np.array([x0,y0,-H_RT])*rescale_x
+xv=np.array([x0,y0,H_RT*corrector2])*rescale_x
+xvbottom=np.array([x0,y0,-H_RT*corrector2])*rescale_x
 #vv=np.array([v0v[0,:],v0v[1,:],vz*corrector])*rescale_v
 #vvbottom=np.array([v0v[0,:],v0v[1,:],-vz*corrector])*rescale_v
 
@@ -165,9 +213,9 @@ xvbottom=np.array([x0,y0,-H_RT])*rescale_x
 #vvbottom=np.array([v0v[0,:],v0v[1,:],np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
 
 #accounting for vertical profile extracted from RT + z**2+R**2 correction
-rescale_v2=1.#*np.sqrt(Rplan)*(Rplan/(Rplan**2+H_RT**2)**(3./4.))
-vv=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(vz*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
-vvbottom=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(-vz*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+rescale_v2=1.#np.sqrt(Rplan)*(Rplan/(Rplan**2+H_RT**2)**(3./4.))
+vv=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
+vvbottom=np.array([v0v[0,:]*rescale_v2,v0v[1,:]*rescale_v2,np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
 
 
 
@@ -176,14 +224,13 @@ vvz0=np.array([v0v[0,:],v0v[1,:],0.*v0v[0,:]])*rescale_v
 
 
 #xcirc
+correctorcirc=3.
 zcirc=vs.Hcirc(np.sqrt(x0**2+y0**2))
-xvcirc=np.array([x0,y0,zcirc*corrector2])*rescale_x
-xvcircbottom=np.array([x0,y0,-zcirc*corrector2])*rescale_x
+xvcirc=np.array([x0,y0,zcirc*correctorcirc])*rescale_x
+xvcircbottom=np.array([x0,y0,-zcirc*correctorcirc])*rescale_x
 xvcirc0=np.array([x0,y0,0.*x0])*rescale_x #no vertical displacement
 
 #vcirc
-vycircplan=vycirc.reshape(nx*ny)[selectxya]
-vxcircplan=vxcirc.reshape(nx*ny)[selectxya]
 vcircv=np.array([vxcircplan,vycircplan,0.*vxcircplan])*rescale_v
 
 #xvsim=np.array([xgrplan,ygrplan,zplan*corrector2])*rescale_x
@@ -192,22 +239,13 @@ vcircv=np.array([vxcircplan,vycircplan,0.*vxcircplan])*rescale_v
 #vvsimbottom=np.array([vxplan,vyplan,-vzplan*corrector])*rescale_v
 xvsim=np.array([xgrplan,ygrplan,H_RT*corrector2])*rescale_x
 xvsimbottom=np.array([xgrplan,ygrplan,-H_RT*corrector2])*rescale_x
-vvsim=np.array([vxplan,vyplan,np.nan_to_num(vzplan*corrector*H_RT/zplan,posinf=0.,neginf=0.)])*rescale_v
-vvsimbottom=np.array([vxplan,vyplan,np.nan_to_num(-vzplan*corrector*H_RT/zplan,posinf=0.,neginf=0.)])*rescale_v
+#the 0.8 to account for factor sqrt(2/pi)
+vvsim=np.array([vxplan,vyplan,np.nan_to_num(vzplan*corrector*H_RT/(zplan),posinf=0.,neginf=0.)])*rescale_v
+vvsimbottom=np.array([vxplan,vyplan,np.nan_to_num(-vzplan*corrector*H_RT/(zplan),posinf=0.,neginf=0.)])*rescale_v
 
-
-#pressure corrected velocities
-vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v0v[0,:],v0v[1,:])
-vphi_press=gv.pressure_corrected_vphi(a,vphi,dPda1rhoa_a)
-vx_press,vy_press=gv.vrvphi2vxvy(xgrplan,ygrplan,vr,vphi_press)
-
-#vvpress=np.array([vx_press,vy_press,vz*corrector])*rescale_v
-#vvpressbottom=np.array([vx_press,vy_press,vz*corrector])*rescale_v
-vvpress=np.array([vx_press*rescale_v2,vy_press*rescale_v2,np.nan_to_num(vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
-vvpressbottom=np.array([vx_press*rescale_v2,vy_press*rescale_v2,np.nan_to_num(-vz*corrector*H_RT/z0,posinf=0.,neginf=0.)])*rescale_v
-
-
-
+#the 0.8 to account for factor sqrt(2/pi)
+vvpress=np.array([vx_press,vy_press,np.nan_to_num(vz*corrector*H_RT/(z0),posinf=0.,neginf=0.)])*rescale_v
+vvpressbottom=np.array([vx_press,vy_press,np.nan_to_num(-vz*corrector*H_RT/(z0),posinf=0.,neginf=0.)])*rescale_v
 
 #Rotate positions for inclination and PA
 x01v=rot_x(xv,i0)
@@ -249,11 +287,21 @@ x1vsimbottom=rot_z(x01vsimbottom,PA0)
 v1vsim=rot_x(vvsim,i0)
 v1vsimbottom=rot_x(vvsimbottom,i0)
 
+#defining plot limits and rescaling
+xmin=xmin*rescale_x
+ymin=ymin*rescale_x
+zmin=zmin*rescale_x
+
+xmax=xmax*rescale_x
+ymax=ymax*rescale_x
+zmax=zmax*rescale_x
+
+extent = aout*rescale_x #fits.open(filename)[0].header['CDELT2'] * 1024 * 3600
 velmax=2.60
 velmin=-velmax
 lev=np.linspace(-velmax,velmax,19)
 
-extent = aout*rescale_x #fits.open(filename)[0].header['CDELT2'] * 1024 * 3600
+
 
 
 matchsign=-1. # -1 to match the sign convention in observations
@@ -385,6 +433,20 @@ vzpress0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0
 vsim_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vsim[0,:],x1vsim[1,:],v1vsim[2,:]*matchsign,xnew_grid,ynew_grid)
 #vzpress_interpf=itp.interpolator_2D_spline(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign)
 
+vzpress_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign,xnew_grid,ynew_grid)
+#vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc[0,:],x1vcirc[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
+#note that for vcirc one needs the correct scale height, which we do not have in x1vcircv, so we use same coordinates as 
+#eccentric case for a fair comparison. Residuals from this case are how they would look like in ExoAlma, state of the art.
+vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
+vcirc0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0[1,:],
+                                                        v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
+vzpress0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0[1,:],
+                                                          v1vz0[2,:]*matchsign,xnew_grid,ynew_grid)
+vsim_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vsim[0,:],x1vsim[1,:],v1vsim[2,:]*matchsign,xnew_grid,ynew_grid)
+#vzpress_interpf=itp.interpolator_2D_spline(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign)
+
+
+
 residuals=func_RT((xnew_grid,ynew_grid))-vzpress_interpgrid
 residuals_circ=func_RT((xnew_grid,ynew_grid))-vcirc_interpgrid
 residuals_circ0=func_RT((xnew_grid,ynew_grid))-vcirc0_interpgrid
@@ -394,13 +456,26 @@ residuals_simmodel=vsim_interpgrid-vzpress_interpgrid
 residuals_simcirc=vsim_interpgrid-vcirc_interpgrid
 residuals_simcirc0=vsim_interpgrid-vcirc0_interpgrid
 
+#clean properly the cavity from spurious contours
+#residuals[(residuals>-0.0001)*(residuals<0.0001)]=0.
+#residuals_simmodel[(residuals_simmodel>-0.0001)*(residuals_simmodel<0.0001)]=0.
+#vzpress_interpgrid[(vzpress_interpgrid>-0.0001)*(vzpress_interpgrid<0.0001)]=0.
 
 velomax=0.3
 lev2=[-0.1,0,0.1]
 
 plt.figure(11)
 plt.pcolormesh(xnew,ynew,residuals,cmap='RdBu_r',vmin=-0.4,vmax=0.4)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
 plt.savefig(folderres+'res_RT_vpress.'+img)
@@ -413,14 +488,32 @@ plt.axis('equal')
 
 plt.figure(33)
 plt.pcolormesh(xnew,ynew,func_RT((xnew_grid,ynew_grid)),cmap='RdBu_r',vmin=-velmax,vmax=velmax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,func_RT((xnew_grid,ynew_grid)),levels=lev,linewidths=0.5,colors='k')
 plt.axis('equal')
 plt.savefig(folderres+'RT_30.'+img)
 
 plt.figure(44)
 plt.pcolormesh(xnew,ynew,vsim_interpgrid,cmap='RdBu_r',vmin=-velmax,vmax=velmax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,vsim_interpgrid,levels=lev,linewidths=0.5,colors='k')
 plt.axis('equal')
 
@@ -431,7 +524,16 @@ plt.axis('equal')
 
 plt.figure(55)
 plt.pcolormesh(xnew,ynew,residuals_sim,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_sim,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
 
@@ -439,33 +541,78 @@ plt.figure(66)
 plt.pcolormesh(xnew,ynew,residuals_circ,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.colorbar()
 plt.contour(xnew,ynew,residuals_circ,levels=lev2,linewidths=0.5,colors='k')
-plt.axis('equal')
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.savefig(folderres+'res_RT_vcirc.'+img)
 
 plt.figure(77)
 plt.pcolormesh(xnew,ynew,residuals_press0,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_press0,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
 plt.savefig(folderres+'res_RT_vpress0.'+img)
 
 plt.figure(88)
 plt.pcolormesh(xnew,ynew,residuals_simmodel,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_simmodel,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
 plt.savefig(folderres+'res_sim_vpress.'+img)
 
 plt.figure(99)
 plt.pcolormesh(xnew,ynew,residuals_simcirc,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_simcirc,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
 plt.savefig(folderres+'res_sim_vcirc.'+img)
 
 plt.figure(100)
 plt.pcolormesh(xnew,ynew,residuals_circ0,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_circ0,levels=lev2,linewidths=0.5,colors='k')
 plt.axis('equal')
 plt.savefig(folderres+'res_RT_vcirc0.'+img)
@@ -476,7 +623,9 @@ def sumres(x):
     return np.sqrt((xx**2).sum())
 
 sumreslast=sumres(residuals)
-print(sumreslast)
+print('Residuals RT-model:',sumreslast)
+sumresmodel=sumres(residuals_simmodel)
+print('Residualt sim-model:',sumresmodel)
 
 #nchannels=21
 #xchan=[]
