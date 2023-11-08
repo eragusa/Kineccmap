@@ -28,7 +28,12 @@ def interpolator_2D(x,y,z):
    # ygrplan=ygr.reshape(nx*ny)
     #zplan=z.reshape(nx,ny)
  #   pdb.set_trace()
-    interp_f = RegularGridInterpolator((x, y), z.transpose(),bounds_error=False, fill_value=None)
+    sorted_indices = np.argsort(x)
+    x_sorted = x[sorted_indices]
+    y_sorted = y[sorted_indices]
+    z_sorted = z[sorted_indices]
+ 
+    interp_f = RegularGridInterpolator((x_sorted, y_sorted), z_sorted.transpose(),bounds_error=False, fill_value=None)
     return interp_f
 
 def interpolator_2D_nonregular_togrid(x,y,z,xnew,ynew):

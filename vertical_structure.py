@@ -5,6 +5,7 @@ from scipy.interpolate import RegularGridInterpolator
 import useful_param as up
 import interpolation as itp
 import pdb
+import harmonic_solve as hs
 
 a0=up.ain #6. #be careful R_ref not always coincides with R_in
 G=up.G
@@ -62,8 +63,8 @@ def calculate_vertical_structure(x,y,ainp,e,cosvarpi,sinvarpi,sigma):
     
     #obtain physically meaningful quantities H=ht*Hcirc, v_z=dh/ht*cs
     #quantities are dimensionless in H.
-    H_arr=Hcirc(amesh)*htarr
-    vz_arr=dharr*cs(amesh)*(1./2./np.pi)**0.25 #*z/H   #dharr/htarr*cs(amesh)  
+    H_arr=htarr*Hcirc(amesh)
+    vz_arr=dharr*cs(amesh)#*(2./np.pi)**0.25 #*z/H   #dharr/htarr*cs(amesh)  
     #the 2/pi factor comes from the fact that the way the velocity is calculated 
     #in the sim returns value at z=sqrt(H^2*sqrt(1/2pi)) as Int[z*z/|z|^Gaussian=H*sqrt(1/2pi),{z,0,+Infty}
 
@@ -88,6 +89,66 @@ def calculate_vertical_structure(x,y,ainp,e,cosvarpi,sinvarpi,sigma):
     vz_xy=vz_func(ainp,Eanom_xy_shift)
         
     return H_xy,vz_xy
+
+def calculate_vertical_structure_bulk(x,y,ainp,e,cosvarpi,sinvarpi,sigma,alphab=0.005):
+    #it generates H and vz from the semi-major axis profile and gives back a value for each 
+    #point in the grid interpolating and shifting gfor phase
+    a_arr=np.linspace(ainp.min(),ainp.max(),100)
+    e_arr=e(a_arr)
+    varpi_arr=np.arctan2(sinvarpi(a_arr),cosvarpi(a_arr))
+    HR_arr=Hcirc(a_arr)/a_arr
+    H_arr=Hcirc(a_arr)
+    nphi=500
+    phi_arr=np.linspace(0,2*np.pi,nphi)
+    #creating mesh a,E
+    amesh,phimesh=np.meshgrid(a_arr,phi_arr)
+
+    htlist=[]
+    dhlist=[]      
+    for i in range(len(e_arr)):
+        e0=e_arr[i]
+        # need to set an inital guess h0=1 corresponds to the circular value is a reasonable starting place.
+        # But setting it to the results of the e=0.35 calculation appears to be valid over a wider range of e    
+        Hin=[H_arr[i],0.0]
+#        if i==78: pdb.set_trace()
+        phi_bulk, H_bulk, dHdphi_bulk, dHdt_bulk=hs.solve_vert_struct_vel_bulk_bvp(Hin[0],e0,varpi_arr[i],a_arr[i],Hor=HR_arr[i],alphab=alphab,Hin=Hin,numpoints=nphi)
+        #phi_bulk, H_bulk, dHdphi_bulk, dHdt_bulk=hs.solve_vert_struct_vel_bulk(Hin[0],e0,a_arr[i],varpi_arr[i],Hor=HR_arr[i],alphab=alphab,Hin=Hin,numpoints=nphi)
+        ht=H_bulk
+        dh=dHdt_bulk
+        htlist.append(ht)
+        dhlist.append(dh) 
+        print(e0,a_arr[i],i,ht[0],ht[-1],dh[0],dh[-1]) 
+
+    htarr=np.array(htlist).transpose()
+    dharr=np.array(dhlist).transpose()
+    
+    #obtain physically meaningful quantities H=ht*Hcirc, v_z=dh/ht*cs
+    #quantities are dimensionless in H.
+    H_arr=htarr
+    vz_arr=dharr#*(2./np.pi)**0.25 #*z/H   #dharr/htarr*cs(amesh)  
+    #the 2/pi factor comes from the fact that the way the velocity is calculated 
+    #in the sim returns value at z=sqrt(H^2*sqrt(1/2pi)) as Int[z*z/|z|^Gaussian=H*sqrt(1/2pi),{z,0,+Infty}
+
+    #pdb.set_trace()
+    interp_H = RegularGridInterpolator((a_arr, phi_arr), H_arr.transpose(),bounds_error=False, fill_value=None)
+    def H_func(aa,phiphi):
+        return interp_H((aa,phiphi))*(aa<ainp.max())
+
+    interp_vz = RegularGridInterpolator((a_arr, phi_arr), vz_arr.transpose(),bounds_error=False, fill_value=None)
+    def vz_func(aa,phiphi):
+        return interp_vz((aa,phiphi))*(aa<ainp.max())
+
+    #calculating the Eccentric anomaly for each gridelement shifted to account for disc eccentric phase
+    f_xy=np.mod(np.arctan2(y,x),np.pi*2.)
+    e_xy=e(ainp)
+    varpi_xy=np.arctan2(sinvarpi(ainp),cosvarpi(ainp))
+    #sigma_arr=sigma(a_arr)
+    
+    H_xy=H_func(ainp,f_xy)
+    vz_xy=vz_func(ainp,f_xy)
+#    pdb.set_trace() 
+    return H_xy,vz_xy
+
 
 def vert_struct_solver(H0,e0):
     Omega0=1. #used for cs=H0*Omega0

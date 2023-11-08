@@ -23,6 +23,12 @@ binarysemimaj=15.
 distance=130
 lorig=1. #current binary size
 
+#corrector of vertical velocity and scale height
+corrector=1.#3.5#corrector for matching the last emission surface in units of H
+corrector2=corrector
+
+
+
 rescale=binarysemimaj/lorig
 
 rescale_simx=rescale/distance #to rescale the sim, after having already being rescaled
@@ -44,7 +50,7 @@ density=np.loadtxt(name+'_columndensity_proj.pix')
 vx=np.loadtxt(name+'_vx_proj.pix')
 vy=np.loadtxt(name+'_vy_proj.pix')
 z=np.sqrt(np.loadtxt(name+'_z2_proj.pix'))
-vzsim=np.loadtxt(name+'_vz1_proj.pix')
+vzsim=np.loadtxt(name+'_vz1_proj.pix')/(np.sqrt(2./np.pi)) #correction to match velocity at height H.
 #vz=-vz #for consistency with sign convention in observations
 
 #vz=np.sqrt(np.loadtxt(name+'_vz2_proj.pix'))#-vzm**2)
@@ -185,9 +191,6 @@ vxplan=gv.include_excluded_velocity(vxplan,xgr,ygr,a_full,ain,aout)
 vyplan=gv.include_excluded_velocity(vyplan,xgr,ygr,a_full,ain,aout)
 vzplan=gv.include_excluded_velocity(vzplan,xgr,ygr,a_full,ain,aout)
 
-
-corrector=1.#3.5#corrector for matching the last emission surface in units of H
-corrector2=corrector
 
 #generate real height from radtransf of the faceon case
 file_path = './MCFOST/RT2A500/i_0_deg/interpolate_H_0.pkl'
@@ -361,9 +364,8 @@ ax.set_zlim([zmin,zmax])
 plt.figure(4)
 velmax=0.42
 velmin=-velmax
-
 plt.scatter(xv[0,:],xv[1,:],c=vv[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velmax)
-plt.scatter(xvbottom[0,:],xvbottom[1,:],c=vvbottom[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.scatter(xvbottom[0,:],xvbottom[1,:],c=vvbottom[2,:]*matchsign,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.colorbar()
 plt.axis('equal')
 plt.xlim([-extent,extent])

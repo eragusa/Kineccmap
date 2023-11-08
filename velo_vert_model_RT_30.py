@@ -23,6 +23,10 @@ binarysemimaj=15.
 distance=130
 lorig=1. #current binary size
 
+#corrector of the vertical velocity and scale height
+corrector=1.#3.5#corrector for matching the last emission surface in units of H
+corrector2=corrector
+
 rescale=binarysemimaj/lorig
 
 rescale_simx=rescale/distance #to rescale the sim, after having already being rescaled
@@ -44,7 +48,8 @@ density=np.loadtxt(name+'_columndensity_proj.pix')
 vx=np.loadtxt(name+'_vx_proj.pix')
 vy=np.loadtxt(name+'_vy_proj.pix')
 z=np.sqrt(np.loadtxt(name+'_z2_proj.pix'))
-vzsim=np.loadtxt(name+'_vz1_proj.pix')
+vzsim=np.loadtxt(name+'_vz1_proj.pix')/(np.sqrt(2./np.pi)) #correction to match velocity at height H.
+
 #vz=-vz #for consistency with sign convention in observations
 
 #vz=np.sqrt(np.loadtxt(name+'_vz2_proj.pix'))#-vzm**2)
@@ -186,9 +191,6 @@ vxplan=gv.include_excluded_velocity(vxplan,xgr,ygr,a_full,ain,aout)
 vyplan=gv.include_excluded_velocity(vyplan,xgr,ygr,a_full,ain,aout)
 vzplan=gv.include_excluded_velocity(vzplan,xgr,ygr,a_full,ain,aout)
 
-
-corrector=1.#3.5#corrector for matching the last emission surface in units of H
-corrector2=corrector
 
 #generate real height from radtransf of the faceon case
 file_path = './MCFOST/RT2A500/i_0_deg/interpolate_H_0.pkl'
@@ -432,19 +434,6 @@ vzpress0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0
                                                           v1vz0[2,:]*matchsign,xnew_grid,ynew_grid)
 vsim_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vsim[0,:],x1vsim[1,:],v1vsim[2,:]*matchsign,xnew_grid,ynew_grid)
 #vzpress_interpf=itp.interpolator_2D_spline(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign)
-
-vzpress_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign,xnew_grid,ynew_grid)
-#vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc[0,:],x1vcirc[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
-#note that for vcirc one needs the correct scale height, which we do not have in x1vcircv, so we use same coordinates as 
-#eccentric case for a fair comparison. Residuals from this case are how they would look like in ExoAlma, state of the art.
-vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
-vcirc0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0[1,:],
-                                                        v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
-vzpress0_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc0[0,:],x1vcirc0[1,:],
-                                                          v1vz0[2,:]*matchsign,xnew_grid,ynew_grid)
-vsim_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vsim[0,:],x1vsim[1,:],v1vsim[2,:]*matchsign,xnew_grid,ynew_grid)
-#vzpress_interpf=itp.interpolator_2D_spline(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign)
-
 
 
 residuals=func_RT((xnew_grid,ynew_grid))-vzpress_interpgrid

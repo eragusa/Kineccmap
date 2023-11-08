@@ -12,7 +12,7 @@ import useful_param as up
 img=up.img
 #folderres='./analysis_paper/azimuth'
 #folderres='./figures_for_poster/azimuth'
-folderres=up.folderres+'azimuth'
+folderres=up.folderres+'/azimuth'
 
 name=sys.argv[1]
 
@@ -298,7 +298,7 @@ plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
 #plt.tricontour(xgrplan,ygrplan,(vphisim-vphi)/vphi,levels=20, linewidths=0.5, colors='k')
-plt.title('$(v_{\\phi,{\\rm sim}}-v_\\phi)/v_{\\phi}$')
+plt.title('$(v_{\\theta,{\\rm sim}}-v_\\theta)/v_{\\theta}$')
 #plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -316,7 +316,7 @@ plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
 #plt.tricontour(xgrplan,ygrplan,(vphisim-vphi_press)/vphi,levels=20, linewidths=0.5, colors='k')
-plt.title('$(v_{\\phi,{\\rm sim}}-v_{\\phi,{\\rm press}})/v_{\\phi}$')
+plt.title('$(v_{\\theta,{\\rm sim}}-v_{\\theta,{\\rm P}})/v_{\\theta}$')
 #plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -334,7 +334,7 @@ plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
 #plt.tricontour(xgrplan,ygrplan,(vphisim-vphi_press)/vphi,levels=20, linewidths=0.5, colors='k')
-plt.title('$(v_{\\phi,{\\rm sim}}-v_{\\rm circ})/v_{\\phi}$')
+plt.title('$(v_{\\theta,{\\rm sim}}-v_{\\rm circ})/v_{\\theta}$')
 #plt.axis('equal')
 plt.xlabel('$x$')
 plt.ylabel('$y$')
@@ -382,7 +382,7 @@ plt.savefig(folderres+'/vphi_sim.'+img,dpi=400)
 vrmax=1.#vr.max()
 velmax=0.2#(vr-vrsim).max()*0.9
 velmin=-velmax
-plt.figure(44)
+plt.figure(441)
 Dvr_vphi_matr=gv.plan2matr((vrsim-vr)/vphi,nx,ny,selectxya)
 plt.pcolormesh(x,y,Dvr_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 #plt.scatter(xgrplan,ygrplan,c=(vrsim-vr)/vphi,cmap="RdBu_r",vmin=velmin/vrmax,vmax=velmax/vrmax)
@@ -393,6 +393,22 @@ plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.title('$(v_{r,sim}-v_r)/v_{\\phi}$')
 plt.savefig(folderres+'/Dvr_vphi.'+img,dpi=400)
+
+vrmax=1.#vr.max()
+velmax=0.2#(vr-vrsim).max()*0.9
+velmin=-velmax
+plt.figure(442)
+Dvr_vphi_matr=gv.plan2matr((vrsim-vr)/vphi,nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvr_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+#plt.scatter(xgrplan,ygrplan,c=(vrsim-vr)/vphi,cmap="RdBu_r",vmin=velmin/vrmax,vmax=velmax/vrmax)
+plt.colorbar()
+#plt.tricontour(xgrplan,ygrplan,(vr-vrsim)/vphi,levels=20, linewidths=0.5, colors='k')
+plt.axis('equal')
+plt.xlim([x_min,x_max])
+plt.ylim([y_min,y_max])
+plt.title('$(v_{r,sim}-v_r)/v_{\\phi}$')
+plt.savefig(folderres+'/Dvr_circ_vphi.'+img,dpi=400)
+
 
 #dmax=((vrsim-vr)*densityplan).max()
 #plt.figure(5)

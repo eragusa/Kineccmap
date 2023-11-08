@@ -26,7 +26,7 @@ density=np.loadtxt(name+'_columndensity_proj.pix')
 vx=np.loadtxt(name+'_vx_proj.pix')
 vy=np.loadtxt(name+'_vy_proj.pix')
 z=np.sqrt(np.loadtxt(name+'_z2_proj.pix'))
-vz=np.loadtxt(name+'_vz1_proj.pix')
+vz=np.loadtxt(name+'_vz1_proj.pix')/np.sqrt(2./np.pi)#(np.sqrt(2./np.pi))**2 #correction to match velocity at height H.
 #vz=np.sqrt(np.loadtxt(name+'_vz2_proj.pix'))#-vzm**2)
 #vz=np.loadtxt(name+'_vz1_proj.pix')
 #vz=(np.loadtxt(name+'_vz4_proj.pix'))**(1./4.)
@@ -84,7 +84,8 @@ ygrplan=ygr.reshape(nx*ny)[selectxya]
 vr,vphi=gv.vxvy2vrvphi(xgrplan,ygrplan,v1v[0,:],v1v[1,:])
 vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
 #calculate H and vz teor
-H,vz=vs.calculate_vertical_structure(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma)
+H,vz=vs.calculate_vertical_structure_bulk(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma,alphab=0.1)#0.005*5./3.)
+#H,vz=vs.calculate_vertical_structure(xgrplan,ygrplan,a,e,cosvarpi,sinvarpi,sigma)
 
 
 #phi=np.linspace(0,6.28,len(H[0]))
@@ -204,22 +205,30 @@ plt.title('$(H_{\\rm sim}-H_{\\rm teor})/H_{\\rm circ}$')
 plt.savefig(folderres+'/DH_a.'+img,dpi=400)
 
 plt.figure(6)
-velmax=0.8#vz.max()*0.9
+velmax=0.035#vz.max()*0.9
 velmin=-velmax
 #plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vz),cmap="RdBu_r",vmin=velmin,vmax=velmax)
-Dvz_vz_matr=gv.plan2matr((vzplan-vz)/np.abs(vz),nx,ny,selectxya)
-plt.pcolormesh(x,y,Dvz_vz_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+Dvz_vphi_matr=gv.plan2matr((vzplan-vz)/np.abs(vphi),nx,ny,selectxya)
+plt.pcolormesh(x,y,Dvz_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.axis('equal')
 plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm teor}})/|v_{z}|$')
-plt.savefig(folderres+'/Dvz_vz.'+img,dpi=400)
+plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm teor}})/|v_{\phi}|$')
+plt.savefig(folderres+'/Dvz_vphi.'+img,dpi=400)
+
+def sumres(x):
+    xx=x.reshape(nx*ny)[selectxya]
+    return np.sqrt((xx**2).sum())
+
+sumreslast=sumres(Dvz_vphi_matr)
+print('vz/vphi residuals sim-model:',sumreslast)
+
 
 plt.figure(60)
-velmax=0.01#vz.max()*0.9
+velmax=0.035#vz.max()*0.9
 velmin=-velmax
 #plt.scatter(xgrplan,ygrplan,c=(np.abs(vzplan)-np.abs(vz))/np.abs(vz),cmap="RdBu_r",vmin=velmin,vmax=velmax)
 Dvz_vz_matr=gv.plan2matr((np.abs(vzplan)-np.abs(vz))/np.abs(vphi),nx,ny,selectxya)
@@ -231,7 +240,7 @@ plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm teor}}|)/|v_{\phi}|$')
-plt.savefig(folderres+'/D|vz|_vz.'+img,dpi=400)
+plt.savefig(folderres+'/D|vz|_vphi.'+img,dpi=400)
 
 
 
@@ -255,8 +264,8 @@ plt.figure(7)
 velmax=0.035#vz.max()*0.9
 velmin=-velmax
 #plt.scatter(xgrplan,ygrplan,c=vz/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
-Dvz_vphi_matr=gv.plan2matr((vz)/np.abs(vphi),nx,ny,selectxya)
-plt.pcolormesh(x,y,Dvz_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+vz_vphi_matr=gv.plan2matr((vz)/np.abs(vphi),nx,ny,selectxya)
+plt.pcolormesh(x,y,vz_vphi_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.axis('equal')
 plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
@@ -268,8 +277,8 @@ plt.savefig(folderres+'/vzteor_vphi.'+img,dpi=400)
 
 plt.figure(72)
 #plt.scatter(xgrplan,ygrplan,c=(vzplan)/np.abs(vphi),cmap="RdBu_r",vmin=velmin,vmax=velmax)
-Dvzsim_vz_matr=gv.plan2matr((vzplan)/np.abs(vphi),nx,ny,selectxya)
-plt.pcolormesh(x,y,Dvzsim_vz_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
+vzsim_vz_matr=gv.plan2matr((vzplan)/np.abs(vphi),nx,ny,selectxya)
+plt.pcolormesh(x,y,vzsim_vz_matr,cmap="RdBu_r",vmin=velmin,vmax=velmax)
 plt.axis('equal')
 plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
