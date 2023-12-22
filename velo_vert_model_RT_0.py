@@ -9,10 +9,11 @@ import useful_param as up
 from rotations import rot_x,rot_y,rot_z
 import pickle
 import interpolation as itp
+from matplotlib.patches import Ellipse
 
-img=up.img
+img='0.png'#up.img
 #folderres='./analysis_paper'
-folderres=up.folderres+'mcfost_RT/0deg/'
+folderres=up.folderres+'/mcfost_RT/0deg/'
 name=sys.argv[1]
 i0=0./180*np.pi#up.i0
 PA0=up.PA0
@@ -158,6 +159,10 @@ vrsim,vphisim=gv.vxvy2vrvphi(xgrplan,ygrplan,vxplan,vyplan)
 x0=xgr.reshape(nx*ny)[a_full<aout] #*1. to make a copy of xgrplan
 y0=ygr.reshape(nx*ny)[a_full<aout] 
 z0=gv.include_excluded_z(H,xgr,ygr,a_full,ain,aout)
+
+#creating mask before reverting selection
+#x_mask=np.array([x0,y0,z0])*rescale_x
+mask=gv.create_mask(z0,xgr,ygr,a_full,ain,aout)
 
 #sim
 xgrplan=x0
@@ -416,7 +421,7 @@ plt.savefig(folderres+'res_scatter_RT_vpress_0.'+img)
 
 
 
-npix=545
+npix=nx
 xnew=np.linspace(-extent,extent,npix)
 ynew=np.linspace(-extent,extent,npix)
 
@@ -429,6 +434,10 @@ with open(file_path, 'rb') as file:
     func_RT = pickle.load(file)
 
 
+mask_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],mask,xnew_grid,ynew_grid)
+H_RT_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],H_RT/zplan,xnew_grid,ynew_grid)
+#H_RT_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],H_RT/vs.Hcirc(a_full[np.nonzero(a_full<aout)[0]]),xnew_grid,ynew_grid)
+#H_RT_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],H_RT/z0,xnew_grid,ynew_grid)
 
 vzpress_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign,xnew_grid,ynew_grid)
 vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc[0,:],x1vcirc[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
@@ -484,7 +493,10 @@ plt.contour(xnew,ynew,vzpress_interpgrid,levels=lev,linewidths=0.5,colors='k')
 plt.savefig(folderres+'vpress_0.'+img)
 
 plt.figure(33)
-plt.pcolormesh(xnew,ynew,func_RT((xnew_grid,ynew_grid)),cmap='RdBu_r',vmin=-velomax,vmax=velomax)
+which=np.nonzero(((1.-mask_interpgrid)<0.0001)*((1.-mask_interpgrid)>-0.0001))
+mask2=(1.-mask_interpgrid)
+mask2[which]=0.
+plt.pcolormesh(xnew,ynew,func_RT((xnew_grid,ynew_grid))*mask2,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.xlabel('$\\Delta \\alpha$ [\'\']')
 plt.ylabel('$\\Delta \\delta$ [\'\']')
 ax=plt.gca()
@@ -495,8 +507,19 @@ ax.set_aspect('equal')
 cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
-plt.contour(xnew,ynew,func_RT((xnew_grid,ynew_grid)),levels=lev,linewidths=0.5,colors='k')
+plt.contour(xnew,ynew,func_RT((xnew_grid,ynew_grid))*mask2,levels=lev,linewidths=0.5,colors='k')
+dx,dy=(0.08, 0.08)
+beam = Ellipse(
+    ax.transLimits.inverted().transform((dx, dy)),
+    width=0.05,
+    height=0.05,
+    angle=0.,
+    fill=True,
+    color="grey")
+
+ax.add_patch(beam)
 plt.savefig(folderres+'RT_0.'+img)
+
 
 #plt.figure(44)
 #plt.pcolormesh(xnew,ynew,residuals_circ,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
@@ -519,8 +542,18 @@ plt.contour(xnew,ynew,residuals_sim,levels=lev,linewidths=0.5,colors='k')
 
 plt.figure(66)
 plt.pcolormesh(xnew,ynew,residuals_circ0,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
-plt.colorbar()
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_circ0,levels=lev,linewidths=0.5,colors='k')
+plt.savefig(folderres+'res_circ.'+img)
 
 plt.figure(77)
 plt.pcolormesh(xnew,ynew,residuals_press0,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
@@ -541,6 +574,28 @@ cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_simmodel,levels=lev,linewidths=0.5,colors='k')
 plt.savefig(folderres+'res_sim_vpress.'+img)
+
+plt.figure(99)
+#do the same as above but place nans where 0 as viridis map does not have white zeros.
+which=np.nonzero(((1.-mask_interpgrid)<0.0001)*((1.-mask_interpgrid)>-0.0001))
+mask2=(1.-mask_interpgrid)
+mask2[which]=np.nan
+plt.pcolormesh(xnew,ynew,H_RT_interpgrid*mask2,cmap='viridis',vmin=0.,vmax=4)
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("$H_{\\rm RT}/H_{\\rm sim}$", size = 17)
+plt.title('$H_{\\rm RT}(\\tau=1)/H_{\\rm sim}$')
+#plt.contour(xnew,ynew,residuals_simmodel,levels=lev,linewidths=0.5,colors='k')
+plt.savefig(folderres+'H_RT.'+img)
+
+
 
 def sumres(x):
     xx=x.reshape(nx*ny)[selectxya]

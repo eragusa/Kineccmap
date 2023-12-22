@@ -9,10 +9,11 @@ import useful_param as up
 from rotations import rot_x,rot_y,rot_z
 import pickle
 import interpolation as itp
+from matplotlib.patches import Ellipse
 
-img=up.img
+img='30.png'#up.img
 #folderres='./analysis_paper'
-folderres=up.folderres+'mcfost_RT/30deg/'
+folderres=up.folderres+'/mcfost_RT/30deg/'
 name=sys.argv[1]
 i0=-30/180*np.pi#up.i0
 PA0=up.PA0
@@ -159,6 +160,10 @@ x0=xgr.reshape(nx*ny)[a_full<aout] #*1. to make a copy of xgrplan
 y0=ygr.reshape(nx*ny)[a_full<aout] 
 z0=gv.include_excluded_z(H,xgr,ygr,a_full,ain,aout)
 
+#creating mask before reverting selection
+#x_mask=np.array([x0,y0,z0])*rescale_x
+mask=gv.create_mask(z0,xgr,ygr,a_full,ain,aout)
+
 #sim
 xgrplan=x0
 ygrplan=y0
@@ -201,7 +206,6 @@ with open(file_path, 'rb') as file:
 
 H_RT=func_H((x0*rescale_x,y0*rescale_x))#the interpolate is already with rescaled x,y
 
-
 #Create arrays for applying rotations and mirror the disc also on the negativ z-axis
 #xv=np.array([x0,y0,z0*corrector2])*rescale_x
 #xvbottom=np.array([x0,y0,-z0*corrector2])*rescale_x
@@ -226,7 +230,7 @@ vvz0=np.array([v0v[0,:],v0v[1,:],0.*v0v[0,:]])*rescale_v
 
 
 #xcirc
-correctorcirc=3.
+correctorcirc=2.5
 zcirc=vs.Hcirc(np.sqrt(x0**2+y0**2))
 xvcirc=np.array([x0,y0,zcirc*correctorcirc])*rescale_x
 xvcircbottom=np.array([x0,y0,-zcirc*correctorcirc])*rescale_x
@@ -254,7 +258,6 @@ x01v=rot_x(xv,i0)
 x01vbottom=rot_x(xvbottom,i0)
 x1v=rot_z(x01v,PA0) 
 x1vbottom=rot_z(x01vbottom,PA0) 
-
 
 x01vcirc=rot_x(xvcirc,i0)
 x01vcircbottom=rot_x(xvcircbottom,i0)
@@ -401,7 +404,7 @@ plt.axis('equal')
 plt.xlim([-extent,extent])
 plt.ylim([-extent,extent])
 
-npix=545
+npix=nx
 xnew=np.linspace(-extent,extent,npix)
 ynew=np.linspace(-extent,extent,npix)
 
@@ -423,6 +426,8 @@ with open(file_path, 'rb') as file:
 Hinterp=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],xv[2,:]/rescale_x,xnew_grid,ynew_grid)
 H_RT2=func_H2((xnew_grid,ynew_grid))
 
+#create mask for cavity using vzpress disc geometry coordinates 
+mask_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],mask,xnew_grid,ynew_grid)
 vzpress_interpgrid=itp.interpolator_2D_nonregular_togrid(x1v[0,:],x1v[1,:],v1vpress[2,:]*matchsign,xnew_grid,ynew_grid)
 #vcirc_interpgrid=itp.interpolator_2D_nonregular_togrid(x1vcirc[0,:],x1vcirc[1,:],v1circv[2,:]*matchsign,xnew_grid,ynew_grid)
 #note that for vcirc one needs the correct scale height, which we do not have in x1vcircv, so we use same coordinates as 
@@ -466,17 +471,19 @@ cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals,levels=lev2,linewidths=0.5,colors='k')
-plt.axis('equal')
 plt.savefig(folderres+'res_RT_vpress.'+img)
 
 plt.figure(22)
 plt.pcolormesh(xnew,ynew,vzpress_interpgrid,cmap='RdBu_r',vmin=-velmax,vmax=velmax)
+plt.axis('equal')
 plt.colorbar()
 plt.contour(xnew,ynew,vzpress_interpgrid,levels=lev,linewidths=0.5,colors='k')
-plt.axis('equal')
 
 plt.figure(33)
-plt.pcolormesh(xnew,ynew,func_RT((xnew_grid,ynew_grid)),cmap='RdBu_r',vmin=-velmax,vmax=velmax)
+which=np.nonzero(((1.-mask_interpgrid)<0.0001)*((1.-mask_interpgrid)>-0.0001))
+mask2=(1.-mask_interpgrid)
+mask2[which]=0.
+plt.pcolormesh(xnew,ynew,func_RT((xnew_grid,ynew_grid))*mask2,cmap='RdBu_r',vmin=-velmax,vmax=velmax)
 plt.xlabel('$\\Delta \\alpha$ [\'\']')
 plt.ylabel('$\\Delta \\delta$ [\'\']')
 ax=plt.gca()
@@ -487,8 +494,18 @@ ax.set_aspect('equal')
 cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
-plt.contour(xnew,ynew,func_RT((xnew_grid,ynew_grid)),levels=lev,linewidths=0.5,colors='k')
-plt.axis('equal')
+plt.contour(xnew,ynew,func_RT((xnew_grid,ynew_grid))*mask2,levels=lev,linewidths=0.5,colors='k')
+dx,dy=(0.08, 0.08)
+beam = Ellipse(
+    ax.transLimits.inverted().transform((dx, dy)),
+    width=0.05,
+    height=0.05,
+    angle=0.,
+    fill=True,
+    color="grey")
+
+ax.add_patch(beam)
+
 plt.savefig(folderres+'RT_30.'+img)
 
 plt.figure(44)
@@ -504,7 +521,6 @@ cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,vsim_interpgrid,levels=lev,linewidths=0.5,colors='k')
-plt.axis('equal')
 
 #plt.figure(44)
 #plt.pcolormesh(xnew,ynew,residuals_circ,cmap='RdBu_r',vmin=-0.4,vmax=0.4)
@@ -512,7 +528,7 @@ plt.axis('equal')
 #plt.contour(xnew,ynew,residuals_circ,levels=lev,linewidths=0.5,colors='k')
 
 plt.figure(55)
-plt.pcolormesh(xnew,ynew,residuals_sim,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
+plt.pcolormesh(xnew,ynew,residuals_sim*mask2,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.xlabel('$\\Delta \\alpha$ [\'\']')
 plt.ylabel('$\\Delta \\delta$ [\'\']')
 ax=plt.gca()
@@ -523,13 +539,11 @@ ax.set_aspect('equal')
 cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
-plt.contour(xnew,ynew,residuals_sim,levels=lev2,linewidths=0.5,colors='k')
-plt.axis('equal')
+plt.contour(xnew,ynew,residuals_sim*mask2,levels=lev2,linewidths=0.5,colors='k')
+plt.savefig(folderres+'res_RT_sim.'+img)
 
 plt.figure(66)
-plt.pcolormesh(xnew,ynew,residuals_circ,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
-plt.colorbar()
-plt.contour(xnew,ynew,residuals_circ,levels=lev2,linewidths=0.5,colors='k')
+plt.pcolormesh(xnew,ynew,residuals_circ*mask2,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
 plt.xlabel('$\\Delta \\alpha$ [\'\']')
 plt.ylabel('$\\Delta \\delta$ [\'\']')
 ax=plt.gca()
@@ -540,6 +554,7 @@ ax.set_aspect('equal')
 cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
+plt.contour(xnew,ynew,residuals_circ*mask2,levels=lev2,linewidths=0.5,colors='k')
 plt.savefig(folderres+'res_RT_vcirc.'+img)
 
 plt.figure(77)
@@ -555,7 +570,6 @@ cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_press0,levels=lev2,linewidths=0.5,colors='k')
-plt.axis('equal')
 plt.savefig(folderres+'res_RT_vpress0.'+img)
 
 plt.figure(88)
@@ -571,7 +585,6 @@ cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_simmodel,levels=lev2,linewidths=0.5,colors='k')
-plt.axis('equal')
 plt.savefig(folderres+'res_sim_vpress.'+img)
 
 plt.figure(99)
@@ -587,7 +600,6 @@ cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_simcirc,levels=lev2,linewidths=0.5,colors='k')
-plt.axis('equal')
 plt.savefig(folderres+'res_sim_vcirc.'+img)
 
 plt.figure(100)
@@ -603,7 +615,6 @@ cb = plt.colorbar()
 cb.ax.tick_params(labelsize = 17)
 cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
 plt.contour(xnew,ynew,residuals_circ0,levels=lev2,linewidths=0.5,colors='k')
-plt.axis('equal')
 plt.savefig(folderres+'res_RT_vcirc0.'+img)
 
 

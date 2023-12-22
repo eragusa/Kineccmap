@@ -229,8 +229,8 @@ def solve_vert_struct_vel_bulk_bvp(H000,ecc,varpival,a,Hor=0.1,alphab=0.01,Hin=[
         J=J_f((a,phi))
         Delta=Delta_f((a,phi))
 #        pdb.set_trace()
-        cs2=(Hor*a*Omega0)**2
         R=a*(1-e**2)/(1+e*np.cos(phi-varpi))
+        cs2=(Hor*a*Omega0)**2
         dOmegadphi=-2*e*np.sin(phi-varpi)*Omega/(1.+e*np.cos(phi-varpi))
         # Compute the derivatives
         d2H_dphi2 = -G*M/R**3/Omega**2 * H -1/Omega*dOmegadphi*dH_dphi\
@@ -362,12 +362,13 @@ if __name__=='__main__':
     
     H=[0.05,0]
     varpi=0.
-    a=1.
-    al=0.05
+    a=3.
+    al=0.01
+    Hor=0.05
     for ecc in eccval:
 
         phi, H, dHdphi, dHdt=solve_vert_struct_vel(H[0],ecc,varpi,a)
-        phi_bulk, H_bulk, dHdphi_bulk, dHdt_bulk=solve_vert_struct_vel_bulk_bvp(H[0],ecc,varpi,a,Hor=0.1,alphab=al)
+        phi_bulk, H_bulk, dHdphi_bulk, dHdt_bulk=solve_vert_struct_vel_bulk_bvp(H[0],ecc,varpi,a,Hor=Hor,Hin=[Hor*a,0.],alphab=al)
 
         # Plot the solution
         plt.figure(1)
@@ -383,7 +384,7 @@ if __name__=='__main__':
         plt.plot(phi_bulk, H_bulk/0.1,label="$\\alpha_b=$"+str(al)+", $e=$"+str(ecc))
         plt.xlabel('$\phi$')
         plt.ylabel('$H/H_0$')
-        plt.ylim([0,2.3])
+       # plt.ylim([0,2.3])
         plt.legend()
         plt.savefig("/Users/enricoragusa/Works/eccMap/sim2A500/vertical_analytics/Hvsphi_bulk.png")
     

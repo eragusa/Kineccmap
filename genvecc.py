@@ -68,6 +68,28 @@ def include_excluded_velocity(v,xgr,ygr,a_full,ain,aout):
     vplan[selin]=0.0
 
     return vplan[a_full<aout]
+
+def create_mask(v,xgr,ygr,a_full,ain,aout):
+    nx=xgr.shape[0]
+    ny=xgr.shape[1]
+    xgrplan=xgr.reshape(nx*ny)
+    ygrplan=ygr.reshape(nx*ny)
+
+    vmatr=np.zeros([nx,ny])
+    vplan=vmatr.reshape(nx*ny)
+
+    #selection in the disc
+    selxya=(a_full>ain)*(a_full<aout)
+    vplan[selxya]=0.
+    #outer disc
+    selout=(a_full>aout)
+    vplan[selout]=0.
+    #inner disc
+    selin=(a_full<ain)
+    vplan[selin]=1.0
+
+    return vplan[a_full<aout]
+ 
     
 def include_excluded_z(z,xgr,ygr,a_full,ain,aout):
     nx=xgr.shape[0]
@@ -200,7 +222,7 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
 
 
     if ain==0: #if ain not passed 
-        ain=up.ain #take value from paramfile
+        ain=up.ain #take value from paramfile for initial guess: profile can be messy inside
         index,radxxx=de.matchtime(radprof,np.array([ain])) #here used to match the value for ain
         fracmax=up.fracmax # at which fraction of max to take cavity size
         #we calculate the max beyond ain provided in paramfile, to avoid bad values in the cavity

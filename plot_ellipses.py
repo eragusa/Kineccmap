@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 frgrid=0.05
 res=de.loadHDF5('datasim.h5')
 index=400
-ain=2.
-aout=6.
+ain=2.7
+aout=10.
 na=20
 ecc=np.abs(res['evecA'][index,:])
 phase=np.angle(res['evecA'][index,:])
@@ -47,7 +47,7 @@ for i in range(len(aa)):
     y=r*np.sin(theta)
     plt.plot(x,y)
 
-maxecc=ecc.max()
+maxecc=0.1#ecc.max()
 plt.axis('equal')
 plt.xlim([-aout*(1+maxecc),aout*(1+maxecc)])
 plt.ylim([-aout*(1+maxecc),aout*(1+maxecc)])
@@ -65,5 +65,3 @@ for i in range(ni,no,int((no-ni)/na2)):
 plt.axis('equal')
 plt.xlim([-aout*(1+maxecc),aout*(1+maxecc)])
 plt.ylim([-aout*(1+maxecc),aout*(1+maxecc)])
-
-

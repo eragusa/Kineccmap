@@ -90,15 +90,15 @@ def calculate_vertical_structure(x,y,ainp,e,cosvarpi,sinvarpi,sigma):
         
     return H_xy,vz_xy
 
-def calculate_vertical_structure_bulk(x,y,ainp,e,cosvarpi,sinvarpi,sigma,alphab=0.005):
+def calculate_vertical_structure_bulk(x,y,ainp,e,cosvarpi,sinvarpi,sigma,alphab=0.005,out_func=False):
     #it generates H and vz from the semi-major axis profile and gives back a value for each 
     #point in the grid interpolating and shifting gfor phase
     a_arr=np.linspace(ainp.min(),ainp.max(),100)
     e_arr=e(a_arr)
     varpi_arr=np.arctan2(sinvarpi(a_arr),cosvarpi(a_arr))
     HR_arr=Hcirc(a_arr)/a_arr
-    H_arr=Hcirc(a_arr)
-    nphi=500
+    H0_arr=Hcirc(a_arr)
+    nphi=1000
     phi_arr=np.linspace(0,2*np.pi,nphi)
     #creating mesh a,E
     amesh,phimesh=np.meshgrid(a_arr,phi_arr)
@@ -109,7 +109,7 @@ def calculate_vertical_structure_bulk(x,y,ainp,e,cosvarpi,sinvarpi,sigma,alphab=
         e0=e_arr[i]
         # need to set an inital guess h0=1 corresponds to the circular value is a reasonable starting place.
         # But setting it to the results of the e=0.35 calculation appears to be valid over a wider range of e    
-        Hin=[H_arr[i],0.0]
+        Hin=[H0_arr[i],0.0]
 #        if i==78: pdb.set_trace()
         phi_bulk, H_bulk, dHdphi_bulk, dHdt_bulk=hs.solve_vert_struct_vel_bulk_bvp(Hin[0],e0,varpi_arr[i],a_arr[i],Hor=HR_arr[i],alphab=alphab,Hin=Hin,numpoints=nphi)
         #phi_bulk, H_bulk, dHdphi_bulk, dHdt_bulk=hs.solve_vert_struct_vel_bulk(Hin[0],e0,a_arr[i],varpi_arr[i],Hor=HR_arr[i],alphab=alphab,Hin=Hin,numpoints=nphi)
@@ -147,7 +147,10 @@ def calculate_vertical_structure_bulk(x,y,ainp,e,cosvarpi,sinvarpi,sigma,alphab=
     H_xy=H_func(ainp,f_xy)
     vz_xy=vz_func(ainp,f_xy)
 #    pdb.set_trace() 
-    return H_xy,vz_xy
+    if out_func:
+        return H_xy,vz_xy,H_func,vz_func
+    else:
+        return H_xy,vz_xy
 
 
 def vert_struct_solver(H0,e0):
