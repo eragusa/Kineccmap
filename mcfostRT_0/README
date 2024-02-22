@@ -1,0 +1,24 @@
+plotMomentX.py produces a fits file that can be arbitrarily rescaled with plot_maps_X.py.
+Note that the radiative transfer was originally done setting distance to 5 pc in order to obtain a cavity of 100 au to have the correct angular size. Nevertheless this approach ended up setting the wrong velocities, for which additional scaling was required. Be very careful to use the scripts on other datasets.
+
+
+To prepare the analysis:
+
+Produce the RT
+mcfost ref3.0_3D.para -phantom ../simEcc2A_00500 -keep_particles 0.99999 -delete_above_latitude 0.4 -tau=1_surface -mol
+
+- Using pymcfost:
+plotMoment1 produces convolved fit M1_30.fits. Note that one can produce also Moment9 maps using plotmoment9, (the name does not change though), so the scripts keep working. In practice. If you want moment9 instead of moment1 decide which plotmomentX to use.
+
+plot_map produces rescaled interpolated functions  interpolate_H_30.pkl and  interpolate_RT_30.pkl from M1_30.fits to be used for comparison with theoretical model when calling velo_vert_model_RT_30.py
+
+- Alternatively, Using bettermoments:
+convolve_data_cube produces a spectrally convolved cube in ./CASA/convolved_CO_cube.fits
+
+- before running velo_vert_model_RT_30 make sure you have run the pymcfost approach, as that allows you to extract the last emission layer that will be used in velo_vert for 30 deg
+
+KinEcc 
+run velo_vert_model_RT_30.py
+
+
+script.sh: contains a list of the commands. 
