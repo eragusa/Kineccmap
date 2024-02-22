@@ -426,8 +426,10 @@ xnew=np.linspace(-extent,extent,npix)
 ynew=np.linspace(-extent,extent,npix)
 
 xnew_grid,ynew_grid=np.meshgrid(xnew, ynew)
-#plotting RT model
+#plotting RT model, change to get M1 or M9 RT model.
 file_path = './MCFOST/RT2A500/i_0_deg/interpolate_RT_0.pkl'
+#file_path = './MCFOST/RT2A500/i_0_deg/interpolate_RT_0_M9.pkl'
+#file_path = './MCFOST/RT2A500/i_0_deg/interpolate_RT_0_M1.pkl'
 
 # Open the file in binary read mode and load the function using pickle
 with open(file_path, 'rb') as file:

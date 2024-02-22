@@ -113,11 +113,11 @@ plt.axis('equal')
 plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.colorbar()
-plt.title('$H_{\\rm theor}$')
+plt.title('$H_{\\rm th}$')
 plt.savefig(folderres+'/Hteor.'+img,dpi=400)
 
 plt.figure(12)
-zmax=(H/a).max()*0.9
+zmax=(H/a).max()*0.95
 zmin=0
 #plt.scatter(xgrplan,ygrplan,c=H/a,cmap="inferno",vmin=zmin,vmax=zmax)
 Ha_matr=gv.plan2matr(H/a,nx,ny,selectxya)
@@ -129,7 +129,7 @@ plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$H_{\\rm theor}/R$')
+plt.title('$H_{\\rm th}/R$')
 plt.savefig(folderres+'/HRteor.'+img,dpi=400)
 
 plt.figure(2)
@@ -144,7 +144,7 @@ plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$v_{z,{\\rm theor}}$')
+plt.title('$v_{z,{\\rm th}}$')
 plt.savefig(folderres+'/vzteor.'+img,dpi=400)
 
 plt.figure(3)
@@ -163,7 +163,7 @@ plt.title('$H_{\\rm sim}$')
 plt.savefig(folderres+'/Hsim.'+img,dpi=400)
 
 plt.figure(32)
-zmax=(H/a).max()*0.9
+zmax=(H/a).max()*0.95
 zmin=0
 #plt.scatter(xgrplan,ygrplan,c=zplan/a,cmap="inferno",vmin=zmin,vmax=zmax)
 zsima_matr=gv.plan2matr(zplan/a,nx,ny,selectxya)
@@ -206,7 +206,7 @@ plt.xlim([x_min,x_max])
 plt.ylim([y_min,y_max])
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$(H_{\\rm sim}-H_{\\rm theor})/H_{\\rm circ}$')
+plt.title('$(H_{\\rm sim}-H_{\\rm th})/H_{\\rm circ}$')
 plt.savefig(folderres+'/DH_a.'+img,dpi=400)
 
 plt.figure(52)
@@ -238,7 +238,7 @@ plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm theor}})/c_{\\rm s}$')
+plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm th}})/c_{\\rm s}$')
 plt.savefig(folderres+'/Dvz_cs.'+img,dpi=400)
 
 def sumres(x):
@@ -267,7 +267,7 @@ print('vz/vphi residuals sim-model:',sumreslast)
 #plt.colorbar()
 #plt.xlabel('$x$')
 #plt.ylabel('$y$')
-#plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm theor}})/c_{\\rm s}$')
+#plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm th}})/c_{\\rm s}$')
 #plt.savefig(folderres+'/Dvz_cs2.'+img,dpi=400)
 #
 
@@ -283,7 +283,7 @@ plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm theor}}|)/c_{\\rm s}$')
+plt.title('$(|v_{z,{\\rm sim}}|-|v_{z,{\\rm th}}|)/c_{\\rm s}$')
 plt.savefig(folderres+'/D|vz|_cs.'+img,dpi=400)
 
 
@@ -300,7 +300,7 @@ plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm theor}})/v_{\\phi}$')
+plt.title('$(v_{z,{\\rm sim}}-v_{z,{\\rm th}})/v_{\\phi}$')
 plt.savefig(folderres+'/Dvz_vphi_highcontrast.'+img,dpi=400)
 
 plt.figure(63)
@@ -333,7 +333,7 @@ plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$v_{z,{\\rm theor}}/v_{\\phi}$')
+plt.title('$v_{z,{\\rm th}}/v_{\\phi}$')
 plt.savefig(folderres+'/vzteor_vphi.'+img,dpi=400)
 
 plt.figure(72)
@@ -361,7 +361,7 @@ plt.ylim([y_min,y_max])
 plt.colorbar()
 plt.xlabel('$x$')
 plt.ylabel('$y$')
-plt.title('$v_{z,{\\rm theor}}/c_{\\rm s}$')
+plt.title('$v_{z,{\\rm th}}/c_{\\rm s}$')
 plt.savefig(folderres+'/vzteor_cs.'+img,dpi=400)
 
 plt.figure(723)

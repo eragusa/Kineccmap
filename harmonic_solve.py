@@ -230,7 +230,9 @@ def solve_vert_struct_vel_bulk_bvp(H000,ecc,varpival,a,Hor=0.1,alphab=0.01,Hin=[
         Delta=Delta_f((a,phi))
 #        pdb.set_trace()
         R=a*(1-e**2)/(1+e*np.cos(phi-varpi))
-        cs2=(Hor*a*Omega0)**2
+        #cs2=(Hor*a*Omega0)**2
+        #changed to be consistent with cs(R) in the sim.
+        cs2=(vs.Hcirc(R)*Omega0*(a/R)**1.5)**2
         dOmegadphi=-2*e*np.sin(phi-varpi)*Omega/(1.+e*np.cos(phi-varpi))
         # Compute the derivatives
         d2H_dphi2 = -G*M/R**3/Omega**2 * H -1/Omega*dOmegadphi*dH_dphi\
@@ -358,12 +360,12 @@ def solve_vert_struct_vel_bulk_bvp_nostruct(H000,ecc,varpival,a,Hor=0.1,alphab=0
 
 if __name__=='__main__':
 
-    eccval=[0.05,0.1,0.2,0.3,0.4]
+    eccval=[0.3,0.4]#[0.05,0.1,0.2,0.3,0.4]
     
     H=[0.05,0]
     varpi=0.
     a=3.
-    al=0.01
+    al=1.
     Hor=0.05
     for ecc in eccval:
 
