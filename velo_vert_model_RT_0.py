@@ -522,6 +522,35 @@ beam = Ellipse(
 ax.add_patch(beam)
 plt.savefig(folderres+'RT_0.'+img)
 
+plt.figure(333)
+which=np.nonzero(((1.-mask_interpgrid)<0.0001)*((1.-mask_interpgrid)>-0.0001))
+mask2=(1.-mask_interpgrid)
+mask2[which]=0.
+plt.pcolormesh(xnew,ynew,vsim_interpgrid*mask2,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
+plt.xlabel('$\\Delta \\alpha$ [\'\']')
+plt.ylabel('$\\Delta \\delta$ [\'\']')
+ax=plt.gca()
+ax.xaxis.label.set_size(17)
+ax.yaxis.label.set_size(17)
+ax.tick_params(labelsize = 17)
+ax.set_aspect('equal')
+cb = plt.colorbar()
+cb.ax.tick_params(labelsize = 17)
+cb.set_label("Velocity [km$\\cdot$s$^{-1}$]", size = 17)
+plt.contour(xnew,ynew,vsim_interpgrid*mask2,levels=lev,linewidths=0.5,colors='k')
+dx,dy=(0.08, 0.08)
+beam = Ellipse(
+    ax.transLimits.inverted().transform((dx, dy)),
+    width=0.05,
+    height=0.05,
+    angle=0.,
+    fill=True,
+    color="grey")
+
+ax.add_patch(beam)
+plt.savefig(folderres+'vzsim_0.'+img)
+
+
 
 #plt.figure(44)
 #plt.pcolormesh(xnew,ynew,residuals_circ,cmap='RdBu_r',vmin=-velomax,vmax=velomax)
