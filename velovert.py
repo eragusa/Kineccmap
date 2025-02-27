@@ -17,8 +17,10 @@ os.system("splash -p nonlog "+name+" -o ascii -r 6 -dev /png")
 os.system("splash -p nonlog "+name+" -o ascii -r 7 -dev /png")
 os.system("splash -p nonlog "+name+" -o ascii -r 8 -dev /png")
 os.system("splash -p nonlog "+name+" -o ascii -r 9 -dev /png")
-os.system("splash -p nonlog "+name+" -o ascii -r 14 -dev /png")
-os.system("splash -p nonlog "+name+" -o ascii -r 15 -dev /png")
+os.system("splash -p nonlog "+name+" -o ascii -r 16 -dev /png")
+#os.system("splash -p nonlog "+name+" -o ascii -r 14 -dev /png")
+os.system("splash -p nonlog "+name+" -o ascii -r 17 -dev /png")
+#os.system("splash -p nonlog "+name+" -o ascii -r 15 -dev /png")
 
 hor=up.hor
 flaring=up.flaring
@@ -98,10 +100,10 @@ H,vz,H_func,vz_func=vs.calculate_vertical_structure_bulk(xgrplan,ygrplan,a,e,cos
  #   plt.figure(2)
  #   plt.plot(phi,vz[i])
 
-x_min=-11.
-x_max=11
-y_min=-11.
-y_max=11.
+x_min=xmin#-11.
+x_max=xmax#11
+y_min=ymin#-11.
+y_max=ymax#11.
 
 plt.figure(1)
 zmax=H.max()*0.9

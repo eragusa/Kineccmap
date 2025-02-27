@@ -226,6 +226,8 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
         index,radxxx=de.matchtime(radprof,np.array([ain])) #here used to match the value for ain
         fracmax=up.fracmax # at which fraction of max to take cavity size
         #we calculate the max beyond ain provided in paramfile, to avoid bad values in the cavity
+    #    if(len(index)==0): #to prevent errors if ain is not within the disc radius
+     #       index=np.array([0])
         wheremax=de.isclosetoArr(Ma,Ma[index[0]:].max()*fracmax,np.diff(Ma).max())[0]
         radIn=radprof[wheremax[0]] 
         ain=radIn #take the inner edge of the cavity
@@ -399,7 +401,6 @@ def generate_velocity_map(x,y,eccinp,phaseinp,sigmainp,Mainp,radprofinp,nprocs=1
 
     #Convert x,y map to a,theta.
     aprov,thetaprov=xy2aphi(x,y,selectingxy)
-
     #Then create the right eccentric cavity with ain and aout
     selectxya=np.nonzero((aprov>ain)*(aprov<aout))[0]
     a=aprov[selectxya]

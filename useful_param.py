@@ -2,13 +2,13 @@ import numpy as np
 
 #folderres='./analysis_paper/'
 #folderres='./sim5A2000/'
-name='sim2A500'
-folderres='./sim2A500'
+name='simCri'
+folderres='./figures'
 img='png'
 #size of ellipses
-ain=2. #at the moment used as minimum radius beyond which strarting looking for the maximum density
+ain=7. #at the moment used as minimum radius beyond which strarting looking for the maximum density
 fracmax=1.#0.3 #which percentage of density is used to define cavity edge
-aout=10.
+aout=150.
 a0=2.
 abin=1.
 #eccentricity parameters

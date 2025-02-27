@@ -76,12 +76,13 @@ def Jacobian_det_interp(e_f,sinvarpi_f,cosvarpi_f,deda_f,dvpda_f,ain=2.5,aout=10
 if __name__=='__main__':
     name=up.name
     frgrid=0.05
-    index=[100]
+    aref=20.#3.
+    index=[0]#[100]
     res=de.loadHDF5('datasim.h5')
     ecc=np.abs(res['evecA'][index[0],:])
     varpi=np.angle(res['evecA'][index[0],:])
     radprof=res['radProf'][:]
-    a=3.*np.ones(100)
+    a=aref*np.ones(100)
     phi=np.linspace(0,np.pi*2.,100)
 
     ee=itp.interpolator(radprof,ecc,npol)
@@ -114,7 +115,8 @@ if __name__=='__main__':
 
     J,alpha,q=Jacobian_det(a,phi,e,sinvarpi,cosvarpi,deda_f,dvpda)
 #    J_f=itp.interpolator_2D(a,phi,J)
-    J2,alpha2,q2,J_f,Delta_f=Jacobian_det_interp(e,sinvarpi,cosvarpi,deda_f,dvpda)
+    #J2,alpha2,q2,J_f,Delta_f=Jacobian_det_interp(e,sinvarpi,cosvarpi,deda_f,dvpda)
+    J2,alpha2,q2,J_f,Delta_f=Jacobian_det_interp(e,sinvarpi,cosvarpi,deda_f,dvpda,ain=radprof[0],aout=radprof[-1])
 
     plt.figure(1)
     plt.plot(radprof,dvarpida)

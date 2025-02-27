@@ -101,10 +101,10 @@ J,alpha,q=morph.Jacobian_det(a,thetaplan,e,sinvarpi,cosvarpi,deda,dvpda)
 SigmaEcc=Ma_a(a)*gv.Omega0(a)/(2*np.pi*J*gv.Omega_orb(a,thetaplan,eccentricity,varpi))
 
 
-x_min=-11.
-x_max=11
-y_min=-11.
-y_max=11.
+x_min=xmin#-11.
+x_max=xmax#11
+y_min=ymin#-11.
+y_max=ymax#11.
 
 #whattoplot=selectxya.reshape()
 velmax=v1v[1,:].max()*0.1
