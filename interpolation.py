@@ -8,15 +8,18 @@ import pdb
 #change it we can change it only here
 
 def interpolator(x,y,opt):
-    option=opt #in case other variables need to be specified from the line
+    option=opt #sets how large is window compared to length of the array.
     #first filter with
+    wl=int(len(x)/option)
+    if wl % 2 == 0:
+        wl += 1
 
     #sistema come option che per sigma serve window stretta perche funzione e' molto steep
-
-    y_filtered=savgol_filter(y,window_length=int(len(x)/option),polyorder=2)
+    #savgol filter fits a polynomial function of order polyorder across a moving window of length window_length 
+    y_filtered=savgol_filter(y,window_length=wl,polyorder=2)
     #then interpolate
     interpolation_method = 'cubic'      
-    interp = interp1d(x, y_filtered, kind=interpolation_method)
+    interp = interp1d(x, y_filtered, kind=interpolation_method,bounds_error=False,fill_value="extrapolate")
     #interp=np.polynomial.Chebyshev.fit(x,y,opt)
     return interp
 

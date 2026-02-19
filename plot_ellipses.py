@@ -1,12 +1,16 @@
 import numpy as np
 import discEccanalysis_pysplash as de
 import matplotlib.pyplot as plt
+import sys
+
+print('Usage: plot_ellipses.py numofsnapshot')
+index=int(sys.argv[1])
 
 frgrid=0.05
 res=de.loadHDF5('datasim.h5')
-index=400
+#index=400
 ain=2.7
-aout=10.
+aout=res['radProf'][-2]
 na=20
 ecc=np.abs(res['evecA'][index,:])
 phase=np.angle(res['evecA'][index,:])
@@ -38,7 +42,7 @@ aa=np.linspace(ain,aout,na)
 varpi=np.arctan2(sinvarpi(aa),cosvarpi(aa))
 eccx=e(aa)
 
-theta=np.linspace(0,np.pi*2.)
+theta=np.linspace(0,np.pi*2.,100)
 
 plt.figure(1)
 for i in range(len(aa)):
